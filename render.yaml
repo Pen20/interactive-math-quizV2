@@ -2,23 +2,15 @@ services:
   - type: web
     name: interactive-math-quiz
     env: node
-    rootDir: server # points to folder with index.js and package.json
+    rootDir: server
     plan: free
     autoDeploy: true
-    buildCommand: npm ci # or "npm install"
+
+    buildCommand: npm ci
     startCommand: node index.js
     healthCheckPath: /healthz
 
+    # Only declare the secret you actually need.
     envVars:
-      - key: NODE_ENV
-        value: production
-      # Render sets PORT automatically; your server reads it via process.env.PORT
-      # Keep this only if you hard-code a default in dev; it's harmless to omit.
-      - key: PORT
-        value: 3080
-      # Set to your Render URL (after you know it) or leave empty for now.
-      - key: FRONTEND_ORIGIN
-        value: https://interactive-math-quiz.onrender.com
-      # Add this secret in the Render dashboard (do not commit a value)
       - key: OPENAI_API_KEY
-        sync: false
+        sync: false # you’ll paste the value in the Render UI
