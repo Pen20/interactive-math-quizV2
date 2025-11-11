@@ -13,12 +13,33 @@
     ></script>
   </head>
   <body>
+    <script>
+      // Require login before using the app: redirect to auth page if no token
+      (function () {
+        try {
+          const token = localStorage.getItem('auth_token');
+          if (!token) {
+            // preserve intended destination after login if desired
+            const dest = encodeURIComponent(location.pathname + location.search);
+            location.replace('/html/auth/login.html?next=' + dest);
+          }
+        } catch (e) {
+          // if storage is not available, still redirect to login
+          location.replace('/html/auth/login.html');
+        }
+      })();
+    </script>
     <div class="container">
       <header>
-        <h1>Interactive Math Quiz</h1>
-        <p>
-          Practice and master mathematical concepts with AI-powered feedback
-        </p>
+        <div class="header-main">
+          <div>
+            <h1>Interactive Math Quiz</h1>
+            <p>Practice and master mathematical concepts with AI-powered feedback</p>
+          </div>
+          <div id="user-area" class="user-area">
+            <!-- Filled by client script: user name and sign out button -->
+          </div>
+        </div>
       </header>
 
       <!-- Add inside the main card grid on index.html -->
@@ -58,10 +79,37 @@
           Your device stores only the selected model. The OpenAI key is kept
           securely on the server.
         </p>
+        <p>
+          <a class="button" href="/html/auth/login.html">Sign In / Sign Up</a>
+        </p>
       </div>
     </div>
 
     <script src="js/app.js"></script>
+    <script>
+      // Populate user area in header
+      (function () {
+        try {
+          const ua = document.getElementById('user-area');
+          const userRaw = localStorage.getItem('auth_user');
+          if (!ua) return;
+          if (userRaw) {
+            let user = {};
+            try { user = JSON.parse(userRaw); } catch (e) { user = {}; }
+            const name = user.name || user.email || 'User';
+            ua.innerHTML = `<span class="user-name">${name}</span> <button id="signout-btn" class="button secondary">Sign out</button>`;
+            document.getElementById('signout-btn').addEventListener('click', () => {
+              if (window.auth && typeof window.auth.signOut === 'function') return window.auth.signOut();
+              localStorage.removeItem('auth_token'); localStorage.removeItem('auth_user'); location.replace('/html/auth/login.html');
+            });
+          } else {
+            ua.innerHTML = `<a class="button" href="/html/auth/login.html">Sign In</a>`;
+          }
+        } catch (e) {
+          // ignore
+        }
+      })();
+    </script>
     <script>
       const modelEl = document.getElementById("gpt-model");
       const savedModel = localStorage.getItem("openai_model");

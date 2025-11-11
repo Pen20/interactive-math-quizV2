@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Sign In / Sign Up</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <script src="/js/auth.js" defer></script>
+  </head>
+  <body>
+      <script>
+        // If user already has a token, go to home (or next)
+        (function () {
+          try {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+              const params = new URLSearchParams(location.search);
+              const next = params.get('next') || '/';
+              location.replace(decodeURIComponent(next));
+            }
+          } catch (e) {
+            // ignore
+          }
+        })();
+      </script>
+    <div class="container">
+      <header>
+        <h1>Account</h1>
+      </header>
+
+      <div class="auth-grid">
+        <div class="auth-hero">
+          <h2>Welcome back!</h2>
+          <p>Sign in to continue working on quizzes, get AI feedback, and save your progress locally.</p>
+          <p style="margin-top:16px; opacity:0.9;">If you're new, create an account — it's quick and free for demos.</p>
+        </div>
+
+        <div>
+          <div class="card">
+            <h2>Sign In</h2>
+            <form id="login-form">
+              <label for="login-email">Email</label>
+              <input type="email" id="login-email" required placeholder="you@example.com" />
+              <label for="login-password">Password</label>
+              <input type="password" id="login-password" required placeholder="Your password" />
+              <button type="submit" class="button primary">Sign In</button>
+            </form>
+          </div>
+
+          <div class="card" style="margin-top:12px;">
+            <h2>Create Account</h2>
+            <form id="signup-form">
+              <label for="signup-name">Name (optional)</label>
+              <input type="text" id="signup-name" placeholder="Your name" />
+              <label for="signup-email">Email</label>
+              <input type="email" id="signup-email" required placeholder="you@example.com" />
+              <label for="signup-password">Password</label>
+              <input type="password" id="signup-password" required placeholder="At least 8 characters" />
+              <button type="submit" class="button">Create Account</button>
+            </form>
+          </div>
+
+          <p style="margin-top:12px; color:#fff; opacity:0.9;">After signing in you'll be redirected back to the home page. The JWT is stored locally for demo purposes.</p>
+        </div>
+      </div>
+      <script src="/js/auth.js" defer></script>
+      <script>
+        // After successful login/signup, auth.js handles redirects (uses 'next' param when provided).
+      </script>
+    </div>
+  </body>
+</html>

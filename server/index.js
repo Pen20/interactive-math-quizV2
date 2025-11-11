@@ -9,6 +9,7 @@ import helmet from "helmet";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
 import openaiRouter from "./openaiRouter.js";
+import authRouter, { verifyToken } from "./authRouter.js";
 
 dotenv.config();
 
@@ -56,6 +57,8 @@ const openaiLimiter = rateLimit({
   legacyHeaders: false,
 });
 app.use("/api/openai", openaiLimiter, openaiRouter);
+// Auth endpoints (signup/login/me)
+app.use("/api/auth", authRouter);
 
 /* ---------- pages ---------- */
 // Home page
