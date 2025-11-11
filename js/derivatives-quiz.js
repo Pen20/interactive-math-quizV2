@@ -1,16 +1,19 @@
 // js/derivatives-quiz.js
 document.addEventListener("DOMContentLoaded", () => {
   /* =========================
-   * DOM ELEMENTS
+   * DOM
    * ========================= */
   const answer1Input = document.getElementById("answer1");
   const answer2Input = document.getElementById("answer2");
 
-  // Live preview blocks for derivatives
   const preview1 = document.getElementById("preview-answer1");
   const preview2 = document.getElementById("preview-answer2");
-  const previewContent1 = preview1.querySelector(".derivative-preview-content");
-  const previewContent2 = preview2.querySelector(".derivative-preview-content");
+  const previewContent1 = preview1?.querySelector(
+    ".derivative-preview-content"
+  );
+  const previewContent2 = preview2?.querySelector(
+    ".derivative-preview-content"
+  );
 
   const validation1 = document.getElementById("validation-answer1");
   const validation2 = document.getElementById("validation-answer2");
@@ -41,10 +44,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const stepsContent = document.getElementById("steps-content");
   const solutionContent = document.getElementById("solution-content");
 
-  const aiFeedbackArea = document.getElementById("ai-feedback-enhanced");
-  const aiFeedbackContent = document.getElementById(
-    "ai-feedback-content-enhanced"
-  );
+  const aiFeedbackSection = document.getElementById("ai-feedback-section");
+  const aiFeedbackContent = document.getElementById("ai-feedback-content");
 
   const hintArea = document.getElementById("hint");
   const examplesArea = document.getElementById("examples");
@@ -83,6 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function initQuiz() {
     updateQuestionDisplay();
     setupEventListeners();
+    // initial preview/validation states
     updatePreview(answer1Input, previewContent1, preview1);
     updatePreview(answer2Input, previewContent2, preview2);
     updateMathPreview();
@@ -90,128 +92,104 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateQuestionDisplay() {
-    function1Display.innerHTML = `\\( ${currentQuestion.part1.function} \\)`;
-    function2Display.innerHTML = `\\( ${currentQuestion.part2.function} \\)`;
+    if (function1Display)
+      function1Display.innerHTML = `\\( ${currentQuestion.part1.function} \\)`;
+    if (function2Display)
+      function2Display.innerHTML = `\\( ${currentQuestion.part2.function} \\)`;
     if (window.MathJax)
       MathJax.typesetPromise([function1Display, function2Display]);
   }
 
   /* =========================
-   * EVENT LISTENERS
+   * EVENTS
    * ========================= */
   function setupEventListeners() {
-    answer1Input.addEventListener("input", () => {
+    answer1Input?.addEventListener("input", () => {
       updatePreview(answer1Input, previewContent1, preview1);
       updateInputStatus();
     });
 
-    answer2Input.addEventListener("input", () => {
+    answer2Input?.addEventListener("input", () => {
       updatePreview(answer2Input, previewContent2, preview2);
       updateInputStatus();
     });
 
-    reasoningInput.addEventListener("input", () => {
+    reasoningInput?.addEventListener("input", () => {
       updateMathPreview();
       updateInputStatus();
     });
 
-    checkAnswerBtn.addEventListener("click", checkAnswers);
-    showSolutionBtn.addEventListener("click", showSolution);
-    showStepsBtn.addEventListener("click", showSteps);
-    clearAllBtn.addEventListener("click", clearAll);
-    newQuestionBtn.addEventListener("click", generateNewQuestion);
-    showHintsBtn.addEventListener("click", toggleHints);
-    if (fillExamplesBtn)
-      fillExamplesBtn.addEventListener("click", fillWithExamples);
+    checkAnswerBtn?.addEventListener("click", checkAnswers);
+    showSolutionBtn?.addEventListener("click", showSolution);
+    showStepsBtn?.addEventListener("click", showSteps);
+    clearAllBtn?.addEventListener("click", clearAll);
+    newQuestionBtn?.addEventListener("click", generateNewQuestion);
+    showHintsBtn?.addEventListener("click", toggleHints);
+    fillExamplesBtn?.addEventListener("click", fillWithExamples);
   }
 
   /* =========================
-   * LIVE PREVIEW FOR ANSWERS
+   * PREVIEW (answers)
    * ========================= */
   function updatePreview(inputEl, previewContentEl, previewContainerEl) {
-    const value = (inputEl.value || "").trim();
+    if (!inputEl || !previewContentEl || !previewContainerEl) return;
 
-    if (value === "") {
+    const value = (inputEl.value || "").trim();
+    if (!value) {
       previewContentEl.innerHTML =
-        '<span class="derivative-preview-placeholder">Your derivative will appear here as you type...</span>';
+        '<span class="derivative-preview-placeholder">Your derivative will appear here as you type…</span>';
       previewContainerEl.classList.remove("preview-valid", "preview-invalid");
       return;
     }
 
-    try {
-      let latex = value;
-      const hasDelims =
-        (latex.startsWith("\\(") && latex.endsWith("\\)")) ||
-        (latex.startsWith("\\[") && latex.endsWith("\\]")) ||
-        (latex.startsWith("$") && latex.endsWith("$"));
+    let latex = value;
+    const hasDelims =
+      (latex.startsWith("\\(") && latex.endsWith("\\)")) ||
+      (latex.startsWith("\\[") && latex.endsWith("\\]")) ||
+      (latex.startsWith("$") && latex.endsWith("$"));
+    if (!hasDelims) latex = `\\( ${latex} \\)`;
 
-      if (!hasDelims) latex = `\\( ${latex} \\)`;
-
-      previewContentEl.innerHTML = latex;
-      if (window.MathJax) {
-        MathJax.typesetPromise([previewContentEl])
-          .then(() => {
-            previewContainerEl.classList.add("preview-valid");
-            previewContainerEl.classList.remove("preview-invalid");
-          })
-          .catch(() => {
-            previewContentEl.innerHTML =
-              '<span style="color:#dc3545;">Invalid LaTeX syntax</span>';
-            previewContainerEl.classList.remove("preview-valid");
-            previewContainerEl.classList.add("preview-invalid");
-          });
-      } else {
-        previewContainerEl.classList.add("preview-valid");
-        previewContainerEl.classList.remove("preview-invalid");
-      }
-    } catch (e) {
-      previewContentEl.innerHTML =
-        '<span style="color:#dc3545;">Error rendering preview</span>';
-      previewContainerEl.classList.remove("preview-valid");
-      previewContainerEl.classList.add("preview-invalid");
+    previewContentEl.innerHTML = latex;
+    if (window.MathJax) {
+      MathJax.typesetPromise([previewContentEl])
+        .then(() => {
+          previewContainerEl.classList.add("preview-valid");
+          previewContainerEl.classList.remove("preview-invalid");
+        })
+        .catch(() => {
+          previewContentEl.innerHTML =
+            '<span style="color:#dc3545;">Invalid LaTeX syntax</span>';
+          previewContainerEl.classList.remove("preview-valid");
+          previewContainerEl.classList.add("preview-invalid");
+        });
     }
   }
 
   /* =========================
-   * REASONING PREVIEW + VALIDATION
+   * REASONING PREVIEW + LaTeX validation
    * ========================= */
-  function safeValidateLatex(text) {
-    // Use global MathUtils if available; otherwise, a lightweight fallback
-    if (
-      window.MathUtils &&
-      typeof window.MathUtils.validateLatexSyntax === "function"
-    ) {
-      return window.MathUtils.validateLatexSyntax(text);
-    }
-    // Fallback: check balanced braces and dollar pairs
-    const bracesBalanced =
-      (text.match(/{/g) || []).length === (text.match(/}/g) || []).length;
-    const dollars = (text.match(/\$/g) || []).length;
-    const dollarsBalanced = dollars % 2 === 0;
-    const result = { isValid: bracesBalanced && dollarsBalanced, errors: [] };
-    if (!bracesBalanced) result.errors.push("unbalanced braces");
-    if (!dollarsBalanced) result.errors.push("unbalanced $ pairs");
-    return result;
-  }
-
   function updateMathPreview() {
-    const value = (reasoningInput.value || "").trim();
+    if (!reasoningInput || !mathPreviewContent || !latexValidation) return;
 
-    if (value === "") {
+    const value = (reasoningInput.value || "").trim();
+    if (!value) {
       mathPreviewContent.innerHTML =
         "Your mathematical notation will appear here as you type...";
       latexValidation.classList.add("hidden");
-      updateLatexStatus(false);
+      setStatus(latexStatus, false);
       return;
     }
 
-    const check = safeValidateLatex(value);
+    // Prefer shared validator when present
+    const check = window.MathUtils
+      ? window.MathUtils.validateLatexSyntax(value)
+      : fallbackValidateLatex(value);
 
     if (check.isValid) {
       latexValidation.innerHTML =
         '<span class="latex-valid">✓ Valid LaTeX syntax</span>';
       latexValidation.classList.remove("hidden");
-      updateLatexStatus(true);
+      setStatus(latexStatus, true);
 
       mathPreviewContent.innerHTML = value;
       if (window.MathJax) {
@@ -225,51 +203,47 @@ document.addEventListener("DOMContentLoaded", () => {
         ", "
       )}</span>`;
       latexValidation.classList.remove("hidden");
-      updateLatexStatus(false);
-      mathPreviewContent.innerHTML =
-        "Your mathematical notation will appear here as you type...";
+      setStatus(latexStatus, false);
+      mathPreviewContent.innerHTML = "Fix LaTeX errors to see preview...";
     }
   }
 
+  function fallbackValidateLatex(text) {
+    const errs = [];
+    const open = (text.match(/(?<!\\){/g) || []).length;
+    const close = (text.match(/(?<!\\)}/g) || []).length;
+    if (open !== close) errs.push("unbalanced braces");
+    const singles = (
+      text.replace(/\$\$[\s\S]*?\$\$/g, "").match(/(?<!\\)\$/g) || []
+    ).length;
+    if (singles % 2) errs.push("unbalanced $ delimiters");
+    return { isValid: errs.length === 0, errors: errs };
+  }
+
   /* =========================
-   * STATUS + ENABLE BUTTON
+   * STATUS + CHECK BUTTON
    * ========================= */
   function updateInputStatus() {
-    const a1Provided = (answer1Input.value || "").trim() !== "";
-    const a2Provided = (answer2Input.value || "").trim() !== "";
-    const reasonProvided = (reasoningInput.value || "").trim() !== "";
+    const a1 = !!answer1Input?.value.trim();
+    const a2 = !!answer2Input?.value.trim();
+    const rs = !!reasoningInput?.value.trim();
 
-    updateStatusIcon(answer1Status, a1Provided);
-    updateStatusIcon(answer2Status, a2Provided);
-    updateStatusIcon(reasoningStatus, reasonProvided);
+    setStatus(answer1Status, a1);
+    setStatus(answer2Status, a2);
+    setStatus(reasoningStatus, rs);
 
-    // Button enabled only when all three provided and LaTeX valid
-    const latexOk = latexStatus.classList.contains("status-check");
-    checkAnswerBtn.disabled = !(
-      a1Provided &&
-      a2Provided &&
-      reasonProvided &&
-      latexOk
-    );
+    const latexOk = latexStatus?.classList.contains("status-check");
+    if (checkAnswerBtn) checkAnswerBtn.disabled = !(a1 && a2 && rs && latexOk);
   }
 
-  function updateLatexStatus(isValid) {
-    updateStatusIcon(latexStatus, isValid);
-  }
-
-  function updateStatusIcon(el, good) {
-    if (!el) return;
-    if (good) {
-      el.textContent = "✓";
-      el.className = "status-check";
-    } else {
-      el.textContent = "✗";
-      el.className = "status-cross";
-    }
+  function setStatus(iconEl, good) {
+    if (!iconEl) return;
+    iconEl.textContent = good ? "✓" : "✗";
+    iconEl.className = good ? "status-check" : "status-cross";
   }
 
   /* =========================
-   * CHECK ANSWERS
+   * ANSWER CHECK
    * ========================= */
   function normalizeAnswer(ans) {
     return (ans || "")
@@ -280,48 +254,104 @@ document.addEventListener("DOMContentLoaded", () => {
       .toLowerCase();
   }
 
-  function checkAnswers() {
-    const userAnswer1 = (answer1Input.value || "").trim();
-    const userAnswer2 = (answer2Input.value || "").trim();
+  async function checkAnswers() {
+    const u1 = (answer1Input.value || "").trim();
+    const u2 = (answer2Input.value || "").trim();
     const reasoning = (reasoningInput.value || "").trim();
 
-    const isAnswer1Correct =
-      normalizeAnswer(userAnswer1) ===
-      normalizeAnswer(currentQuestion.part1.answer);
-    const isAnswer2Correct =
-      normalizeAnswer(userAnswer2) ===
-      normalizeAnswer(currentQuestion.part2.answer);
+    const ok1 =
+      normalizeAnswer(u1) === normalizeAnswer(currentQuestion.part1.answer);
+    const ok2 =
+      normalizeAnswer(u2) === normalizeAnswer(currentQuestion.part2.answer);
 
-    validation1.textContent = isAnswer1Correct
-      ? "✓ Correct!"
-      : "✗ Incorrect. Try again.";
-    validation1.style.color = isAnswer1Correct ? "#28a745" : "#dc3545";
+    // field-level messages
+    if (validation1) {
+      validation1.textContent = ok1 ? "✓ Correct!" : "✗ Incorrect. Try again.";
+      validation1.style.color = ok1 ? "#28a745" : "#dc3545";
+    }
+    if (validation2) {
+      validation2.textContent = ok2 ? "✓ Correct!" : "✗ Incorrect. Try again.";
+      validation2.style.color = ok2 ? "#28a745" : "#dc3545";
+    }
 
-    validation2.textContent = isAnswer2Correct
-      ? "✓ Correct!"
-      : "✗ Incorrect. Try again.";
-    validation2.style.color = isAnswer2Correct ? "#28a745" : "#dc3545";
+    // reasoning quality gate
+    const rq = scoreReasoning(reasoning);
 
-    const allCorrect = isAnswer1Correct && isAnswer2Correct;
-    feedbackArea.textContent = allCorrect
-      ? "Great job! Both derivatives are correct."
-      : "Some answers need correction. Check the hints or solution for help.";
-    feedbackArea.className = allCorrect
-      ? "feedback correct"
-      : "feedback incorrect";
-    feedbackArea.classList.remove("hidden");
+    // overall UI feedback
+    const bothAnswersCorrect = ok1 && ok2;
+    if (feedbackArea) {
+      feedbackArea.textContent = bothAnswersCorrect
+        ? "Great job! Both derivatives are correct."
+        : "Some answers need correction. Check the hints or solution for help.";
+      feedbackArea.className = bothAnswersCorrect
+        ? "feedback correct"
+        : "feedback incorrect";
+      feedbackArea.classList.remove("hidden");
+    }
 
-    generateAIFeedback(allCorrect, reasoning, {
-      part1: userAnswer1,
-      part2: userAnswer2,
+    // correctness label for AI = answers AND reasoning
+    let correctnessLabel = "incorrect";
+    if (bothAnswersCorrect && rq.ok) correctnessLabel = "correct";
+    else if (bothAnswersCorrect || rq.ok)
+      correctnessLabel = "partially-correct";
+
+    await generateAIFeedback({
+      correctnessLabel,
+      bothAnswersCorrect,
+      reasoningScore: rq,
+      userAnswers: { part1: u1, part2: u2 },
+      reasoning,
     });
   }
 
   /* =========================
-   * AI FEEDBACK (CARD STYLE)
+   * REASONING SCORING
    * ========================= */
-  async function generateAIFeedback(isCorrect, reasoning, userAnswer) {
-    aiFeedbackArea.classList.remove("hidden");
+  function scoreReasoning(text) {
+    const t = (text || "").toLowerCase();
+    const minLen = 25; // short notes are often not substantive
+    const hasMath = /\$|\\\(|\\\[|\\frac|\\sin|\\cos|\\ln|\\cdot/.test(t);
+    const keywords = [
+      "chain rule",
+      "differentiate",
+      "derivative",
+      "apply",
+      "u(y)",
+      "let u",
+      "inner",
+    ];
+    const hits = keywords.filter((k) => t.includes(k)).length;
+
+    // LaTeX validity from status icon
+    const latexOk = latexStatus?.classList.contains("status-check");
+
+    const ok = t.length >= minLen && hasMath && hits >= 1 && latexOk;
+    const issues = [];
+    if (t.length < minLen) issues.push("Reasoning is too brief.");
+    if (!hasMath) issues.push("No mathematical notation used.");
+    if (hits < 1) issues.push("Key concept (e.g., chain rule) not referenced.");
+    if (!latexOk) issues.push("LaTeX has syntax errors.");
+
+    const strengths = [];
+    if (t.length >= minLen) strengths.push("Explanation length is sufficient.");
+    if (hasMath) strengths.push("Uses mathematical notation.");
+    if (hits >= 1) strengths.push("References key differentiation concept(s).");
+    if (latexOk) strengths.push("Valid LaTeX syntax.");
+
+    return { ok, strengths, issues };
+  }
+
+  /* =========================
+   * AI FEEDBACK (uses global services when available)
+   * ========================= */
+  async function generateAIFeedback(ctx) {
+    const {
+      correctnessLabel,
+      bothAnswersCorrect,
+      reasoningScore,
+      userAnswers,
+      reasoning,
+    } = ctx;
 
     try {
       const questionData = {
@@ -337,137 +367,91 @@ document.addEventListener("DOMContentLoaded", () => {
         },
       };
 
-      let feedbackObj = null;
-
-      if (
-        window.openAIService &&
-        typeof window.openAIService.generateFeedback === "function"
-      ) {
+      // Prefer your OpenAI service; otherwise fallback locally
+      let feedbackObj;
+      if (window.openAIService?.generateFeedback) {
+        // Single-string user answer for API
+        const userAnswerStr = `Part 1: ${userAnswers.part1}; Part 2: ${userAnswers.part2}`;
         feedbackObj = await window.openAIService.generateFeedback(
           questionData,
-          userAnswer,
+          userAnswerStr,
           reasoning,
-          isCorrect
+          bothAnswersCorrect // keep for compatibility; we override correctness after
         );
+      } else {
+        feedbackObj = {};
       }
 
-      // If ai-render.js exists and has a renderer, use it; else render locally
-      if (
-        feedbackObj &&
-        window.AIRender &&
-        typeof window.AIRender.renderCard === "function"
-      ) {
+      // Ensure cross-quiz consistent correctness policy:
+      // Correct only if answers AND reasoning are good.
+      feedbackObj = {
+        summary:
+          feedbackObj.summary ||
+          (correctnessLabel === "correct"
+            ? "Nice work—your derivatives and reasoning are both sound."
+            : correctnessLabel === "partially-correct"
+            ? "You got part of it right. Review the weaker parts noted below."
+            : "There are important issues to fix. Use the notes below to revise."),
+        correctness: correctnessLabel,
+        strengths: feedbackObj.strengths || reasoningScore.strengths,
+        issues:
+          feedbackObj.issues ||
+          (correctnessLabel === "correct" ? [] : reasoningScore.issues),
+        next_steps:
+          feedbackObj.next_steps ||
+          (correctnessLabel === "correct"
+            ? [
+                "Practice mixed trig/log derivatives",
+                "Keep presenting clean LaTeX.",
+              ]
+            : [
+                "Re-derive each term with the chain rule carefully.",
+                "Tighten reasoning with clear steps and valid LaTeX.",
+              ]),
+        key_concepts: feedbackObj.key_concepts || [
+          "Differentiation",
+          "Chain rule",
+          "Trigonometric derivatives",
+          "Logarithmic derivatives",
+        ],
+        math_highlight:
+          feedbackObj.math_highlight ||
+          (bothAnswersCorrect ? currentQuestion.part1.answer : ""),
+      };
+
+      // Render card
+      if (window.AIRender?.renderCard) {
         aiFeedbackContent.innerHTML = window.AIRender.renderCard(feedbackObj);
       } else {
-        // Build a minimal feedback object if the service isn't available
-        const fallback =
-          feedbackObj || buildLocalFeedback(isCorrect, reasoning);
-        aiFeedbackContent.innerHTML = renderAICardLikeScreenshot(fallback);
+        aiFeedbackContent.innerHTML = `<div class="ai-card"><strong>AI Feedback</strong><p>${escapeHTML(
+          feedbackObj.summary
+        )}</p></div>`;
       }
+      aiFeedbackSection.classList.remove("hidden");
 
       if (window.MathJax) MathJax.typesetPromise([aiFeedbackContent]);
-    } catch (err) {
-      console.error("Error generating AI feedback:", err);
-      aiFeedbackContent.innerHTML = renderAICardLikeScreenshot(
-        buildLocalFeedback(isCorrect, reasoning, true)
-      );
+    } catch (e) {
+      console.error("AI feedback error:", e);
+      aiFeedbackContent.innerHTML =
+        '<p class="error-message">Unable to generate AI feedback right now.</p>';
+      aiFeedbackSection.classList.remove("hidden");
     }
   }
 
-  function buildLocalFeedback(isCorrect, reasoning, errored = false) {
-    const correctness = isCorrect ? "correct" : "incorrect";
-    const baseSummary = isCorrect
-      ? "Nice work — your differentiation is correct. Make sure you present results in clean mathematical form."
-      : "There are mistakes in your derivatives. Review the chain rule and apply coefficients carefully.";
-
-    const summary = errored
-      ? "AI service unavailable right now. Here's quick feedback based on your inputs."
-      : baseSummary;
-
-    return {
-      summary,
-      correctness,
-      strengths: isCorrect
-        ? ["Applied chain rule correctly", "Clean term-by-term differentiation"]
-        : [],
-      issues: isCorrect
-        ? []
-        : [
-            "Coefficient/chain factor missing",
-            "Algebraic simplification needed",
-          ],
-      next_steps: isCorrect
-        ? [
-            "Double-check formatting (LaTeX)",
-            "Practice mixed trig/log derivatives",
-          ]
-        : [
-            "Re-derive each term with chain rule",
-            "Verify coefficients and signs",
-          ],
-      tags: ["Differentiation", "Chain rule", "Trig & log"],
-    };
-  }
-
-  function renderAICardLikeScreenshot(fx) {
-    const ok = (fx.correctness || "").toLowerCase() === "correct";
-    const pillClass = ok ? "aifx-pill aifx-ok" : "aifx-pill aifx-bad";
-    const pillLabel = ok ? "Correct" : "Needs review";
-
-    const strengths =
-      (fx.strengths || []).map((s) => `<li>${escapeHTML(s)}</li>`).join("") ||
-      "—";
-    const issues =
-      (fx.issues || []).map((s) => `<li>${escapeHTML(s)}</li>`).join("") || "—";
-    const steps =
-      (fx.next_steps || []).map((s) => `<li>${escapeHTML(s)}</li>`).join("") ||
-      "—";
-    const badges = (fx.tags || [])
-      .map((t) => `<span class="aifx-badge">${escapeHTML(t)}</span>`)
-      .join("");
-
-    return `
-      <div class="aifx-box">
-        <div class="aifx-head">
-          <div class="aifx-title">AI Feedback</div>
-          <div class="${pillClass}">${pillLabel}</div>
-        </div>
-        <div class="aifx-body">
-          <p>${escapeHTML(fx.summary || "")}</p>
-
-          <div class="aifx-split">
-            <div class="aifx-col">
-              <h5>Strengths</h5>
-              <ul>${strengths}</ul>
-            </div>
-            <div class="aifx-col">
-              <h5>Issues</h5>
-              <ul>${issues}</ul>
-            </div>
-          </div>
-
-          <div class="aifx-col" style="margin-top:12px;">
-            <h5>Next Steps</h5>
-            <ul>${steps}</ul>
-          </div>
-
-          <div class="aifx-badges">${badges}</div>
-        </div>
-      </div>
-    `;
-  }
-
   function escapeHTML(s) {
-    return String(s)
+    return String(s || "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
   /* =========================
    * SOLUTION / STEPS
    * ========================= */
   function showSolution() {
+    if (!solutionContent || !solutionArea) return;
     solutionContent.innerHTML = `
       <div class="step">
         <div class="step-title">Part 1: Trigonometric Function</div>
@@ -485,6 +469,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function showSteps() {
+    if (!stepsContent || !stepByStepArea) return;
     stepsContent.innerHTML = `
       <div class="step">
         <div class="step-title">Part 1: Trigonometric Function</div>
@@ -508,22 +493,22 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =========================
-   * UTIL BUTTONS
+   * UTIL
    * ========================= */
   function clearAll() {
-    answer1Input.value = "";
-    answer2Input.value = "";
-    reasoningInput.value = "";
+    if (answer1Input) answer1Input.value = "";
+    if (answer2Input) answer2Input.value = "";
+    if (reasoningInput) reasoningInput.value = "";
 
-    validation1.textContent = "";
-    validation2.textContent = "";
+    if (validation1) validation1.textContent = "";
+    if (validation2) validation2.textContent = "";
 
-    feedbackArea.classList.add("hidden");
-    stepByStepArea.classList.add("hidden");
-    solutionArea.classList.add("hidden");
-    aiFeedbackArea.classList.add("hidden");
-    hintArea.classList.add("hidden");
-    if (examplesArea) examplesArea.classList.add("hidden");
+    feedbackArea?.classList.add("hidden");
+    stepByStepArea?.classList.add("hidden");
+    solutionArea?.classList.add("hidden");
+    aiFeedbackSection?.classList.add("hidden");
+    hintArea?.classList.add("hidden");
+    examplesArea?.classList.add("hidden");
 
     updatePreview(answer1Input, previewContent1, preview1);
     updatePreview(answer2Input, previewContent2, preview2);
@@ -532,7 +517,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function generateNewQuestion() {
-    // Toggle between two presets
+    // simple toggle between two presets
     if (currentQuestion.part1.function === "f(x) = 3\\cos(2x) + 4\\sin(3x)") {
       currentQuestion = {
         part1: {
@@ -586,15 +571,18 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function toggleHints() {
+    if (!hintArea) return;
     if (hintArea.classList.contains("hidden")) {
       hintArea.classList.remove("hidden");
-      if (examplesArea) examplesArea.classList.add("hidden");
+      examplesArea?.classList.add("hidden");
     } else {
       hintArea.classList.add("hidden");
     }
   }
 
   function fillWithExamples() {
+    if (!answer1Input || !answer2Input || !reasoningInput) return;
+
     answer1Input.value = "-6\\sin(2x) + 12\\cos(3x)";
     answer2Input.value = "\\frac{4y + 3}{2y^2 + 3y + 1}";
     reasoningInput.value = `For Part 1:

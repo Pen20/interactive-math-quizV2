@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: interactive-math-quiz
+    name: interactive-math-quizV2
     env: node
     rootDir: server # points to folder with index.js and package.json
     plan: free
@@ -18,7 +18,7 @@ services:
         value: 3080
       # Set to your Render URL (after you know it) or leave empty for now.
       - key: FRONTEND_ORIGIN
-        value: https://interactive-math-quiz.onrender.com
+        value: https://interactive-math-quizV2.onrender.com
       # Add this secret in the Render dashboard (do not commit a value)
       - key: OPENAI_API_KEY
         sync: false

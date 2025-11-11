@@ -345,3 +345,106 @@
     font-size: 0.9rem;
   }
 }
+
+/* Improved CSS for derivatives quiz */
+
+.derivative-parts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 30px;
+  margin: 20px 0;
+}
+
+@media (min-width: 992px) {
+  .derivative-parts {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.derivative-part {
+  background: #f8f9fa;
+  padding: 25px;
+  border-radius: 10px;
+  border-left: 4px solid #667eea;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.derivative-part h4 {
+  margin-bottom: 15px;
+  color: #333;
+  border-bottom: 2px solid #dee2e6;
+  padding-bottom: 8px;
+}
+
+.function-display {
+  font-size: 1.2em;
+  margin: 15px 0;
+  text-align: center;
+}
+
+.derivative-input {
+  margin: 15px 0;
+}
+
+.derivative-input label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.derivative-input input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: monospace;
+  transition: border-color 0.3s;
+}
+
+.derivative-input input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.formula-reminder {
+  background: #e8f4fd;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+  border-left: 4px solid #3498db;
+}
+
+.formula-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+  .formula-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.math-preview {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 15px;
+  background: #f8f9fa;
+  min-height: 100px;
+}
+
+.math-preview-label {
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+#math-preview-content {
+  min-height: 50px;
+}

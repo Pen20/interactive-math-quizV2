@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Domain & Range – Interactive Math Quiz</title>
+
+    <!-- Shared styles -->
+    <link rel="stylesheet" href="../../css/style.css" />
+    <link rel="stylesheet" href="../../css/quiz-common.css" />
+
+    <!-- MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [
+            ["$", "$"],
+            ["\\(", "\\)"],
+          ],
+          displayMath: [
+            ["\\[", "\\]"],
+            ["$$", "$$"],
+          ],
+        },
+        options: {
+          skipHtmlTags: [
+            "script",
+            "noscript",
+            "style",
+            "textarea",
+            "pre",
+            "code",
+          ],
+        },
+      };
+    </script>
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
+    ></script>
+
+    <style>
+      .quiz-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .quiz-title {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 15px;
+      }
+      .quiz-subtitle {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #6c757d;
+        font-size: 1.2em;
+      }
+      .problem-statement {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        border-left: 4px solid #3498db;
+      }
+      .domain-range-parts {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 25px;
+        margin: 25px 0;
+      }
+      @media (min-width: 768px) {
+        .domain-range-parts {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .domain-range-part {
+        background: #fff;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-top: 4px solid #667eea;
+      }
+      .domain-range-part h4 {
+        margin-bottom: 20px;
+        color: #2c3e50;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+      }
+      .function-display {
+        font-size: 1.2em;
+        margin: 20px 0;
+        text-align: center;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+      }
+      .domain-range-input {
+        margin: 20px 0;
+      }
+      .domain-range-input label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+      .domain-range-input input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        font-size: 16px;
+        font-family: "Courier New", monospace;
+      }
+      .validation {
+        margin-top: 8px;
+        font-size: 14px;
+        min-height: 20px;
+      }
+      .domain-range-preview {
+        margin-top: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+        min-height: 60px;
+      }
+      .domain-range-preview-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #2c3e50;
+        font-size: 14px;
+      }
+      .domain-range-preview-placeholder {
+        color: #6c757d;
+        font-style: italic;
+      }
+      .preview-valid {
+        border-left: 4px solid #28a745;
+        background: #f0fff4;
+      }
+      .preview-invalid {
+        border-left: 4px solid #dc3545;
+        background: #fff5f5;
+      }
+      .formula-reminder {
+        background: #e8f4fd;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 25px 0;
+        border-left: 4px solid #3498db;
+      }
+      .interval-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+      }
+      .interval-table th,
+      .interval-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #dee2e6;
+      }
+      .interval-table th {
+        background: #f1f8ff;
+        font-weight: 600;
+      }
+      .help-section {
+        margin: 20px 0;
+        text-align: center;
+      }
+      .button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      .button.primary {
+        background: #3498db;
+        color: #fff;
+      }
+      .button.secondary {
+        background: #6c757d;
+        color: #fff;
+      }
+      .button.success {
+        background: #28a745;
+        color: #fff;
+      }
+      .reasoning-section {
+        margin: 30px 0;
+        padding: 25px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #17a2b8;
+      }
+      .math-preview {
+        margin-top: 20px;
+        padding: 20px;
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        min-height: 100px;
+      }
+      .input-status {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin: 25px 0;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+      }
+      .status-check {
+        color: #28a745;
+        font-weight: bold;
+      }
+      .status-cross {
+        color: #dc3545;
+        font-weight: bold;
+      }
+      .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 25px 0;
+      }
+      .ai-feedback-enhanced {
+        margin: 25px 0;
+        padding: 25px;
+        background: #e8f4fd;
+        border-radius: 8px;
+        border-left: 4px solid #3498db;
+      }
+      .custom-hint {
+        margin: 25px 0;
+        padding: 25px;
+        background: #fff3cd;
+        border-radius: 8px;
+        border-left: 4px solid #ffc107;
+      }
+      .feedback,
+      .step-by-step,
+      .solution {
+        margin: 25px 0;
+        padding: 25px;
+        border-radius: 8px;
+      }
+      .feedback {
+        background: #d4edda;
+        border-left: 4px solid #28a745;
+      }
+      .step-by-step {
+        background: #e2e3e5;
+        border-left: 4px solid #6c757d;
+      }
+      .solution {
+        background: #d1ecf1;
+        border-left: 4px solid #17a2b8;
+      }
+      .hidden {
+        display: none;
+      }
+      .back-button {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 500;
+      }
+      .back-button:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="quiz-container">
+      <a href="/html/differential/" class="back-button"
+        >← Back to Differential Calculus</a
+      >
+
+      <h1 class="quiz-title">Domain and Range of Functions</h1>
+      <p class="quiz-subtitle">
+        For \(f(x)= a + c\,\lvert x^2 - b\rvert\) with \(c>0\), find the domain
+        and the range.
+      </p>
+
+      <div class="problem-statement">
+        <h4>Problem Statement:</h4>
+        <p>Find the domain and range for the following function:</p>
+      </div>
+
+      <div class="help-section">
+        <button class="button secondary" id="new-question">
+          Generate New Question
+        </button>
+        <button class="button secondary" id="fill-examples">
+          Fill with Examples
+        </button>
+      </div>
+
+      <div class="domain-range-parts">
+        <!-- Domain -->
+        <div class="domain-range-part">
+          <h4>Part 1: Domain</h4>
+          <div class="function-display">
+            <p>
+              Given:
+              <span id="function-display"
+                >\( f(x) = 1 + 1\,\lvert x^2 - 1\rvert \)</span
+              >
+            </p>
+          </div>
+          <div class="domain-range-input">
+            <label for="ans1">Find \( Dom(f) \):</label>
+            <input
+              id="ans1"
+              type="text"
+              placeholder="Enter LaTeX interval (e.g., (-\infty,\infty))"
+            />
+            <div class="validation" id="validation-ans1"></div>
+
+            <div class="domain-range-preview" id="preview-ans1">
+              <div class="domain-range-preview-label">Live Preview:</div>
+              <div class="domain-range-preview-content">
+                <span class="domain-range-preview-placeholder"
+                  >Type a LaTeX interval like (-\infty,\infty)</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Range -->
+        <div class="domain-range-part">
+          <h4>Part 2: Range</h4>
+          <div class="function-display">
+            <p>
+              Given:
+              <span id="function-display-2"
+                >\( f(x) = 1 + 1\,\lvert x^2 - 1\rvert \)</span
+              >
+            </p>
+          </div>
+          <div class="domain-range-input">
+            <label for="ans2">Find \( Range(f) \):</label>
+            <input
+              id="ans2"
+              type="text"
+              placeholder="Enter LaTeX interval (e.g., [a,\infty))"
+            />
+            <div class="validation" id="validation-ans2"></div>
+
+            <div class="domain-range-preview" id="preview-ans2">
+              <div class="domain-range-preview-label">Live Preview:</div>
+              <div class="domain-range-preview-content">
+                <span class="domain-range-preview-placeholder"
+                  >Type a LaTeX interval like [a,\infty)</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interval notation help (LaTeX only) -->
+      <div class="formula-reminder">
+        <h5>Interval Notation (LaTeX):</h5>
+        <table class="interval-table">
+          <thead>
+            <tr>
+              <th>Interval (rendered)</th>
+              <th>Type this (LaTeX)</th>
+              <th>Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>\((-\infty,\infty)\)</td>
+              <td><code>(-\infty,\infty)</code></td>
+              <td>All real numbers</td>
+            </tr>
+            <tr>
+              <td>\([a,\infty)\)</td>
+              <td><code>[a,\infty)</code></td>
+              <td>All \(x \ge a\)</td>
+            </tr>
+            <tr>
+              <td>\((a,\infty)\)</td>
+              <td><code>(a,\infty)</code></td>
+              <td>All \(x > a\)</td>
+            </tr>
+            <tr>
+              <td>\((-\infty,b)\)</td>
+              <td><code>(-\infty,b)</code></td>
+              <td>All \(x < b\)</td>
+            </tr>
+            <tr>
+              <td>\((a,b)\)</td>
+              <td><code>(a,b)</code></td>
+              <td>All \(a < x < b\)</td>
+            </tr>
+            <tr>
+              <td>\([a,b]\)</td>
+              <td><code>[a,b]</code></td>
+              <td>All \(a \le x \le b\)</td>
+            </tr>
+            <tr>
+              <td>\((-\infty,b]\)</td>
+              <td><code>(-\infty,b]</code></td>
+              <td>All \(x \le b\)</td>
+            </tr>
+            <tr>
+              <td>\([a,b)\)</td>
+              <td><code>[a,b)</code></td>
+              <td>All \(a \le x < b\)</td>
+            </tr>
+            <tr>
+              <td>\((a,b]\)</td>
+              <td><code>(a,b]</code></td>
+              <td>All \(a < x \le b\)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style="margin-top: 14px; font-size: 14px">
+          <strong>Tips:</strong> Type <code>\infty</code> for infinity; spaces
+          don’t matter; you may type the interval plain (e.g.
+          <code>(-\infty,\infty)</code>) or wrapped as
+          <code>\((-\infty,\infty)\)</code> / <code>\[(-\infty,\infty)\]</code>.
+          All are accepted.
+        </p>
+      </div>
+
+      <div class="help-section">
+        <button class="button secondary" id="show-hints">
+          Need Help? Show Hints
+        </button>
+      </div>
+
+      <!-- Reasoning -->
+      <div class="reasoning-section">
+        <h3>Explain Your Reasoning</h3>
+        <p>
+          Use LaTeX for math. Example: \(Dom(f)=(-\infty,\infty)\),
+          \(Range(f)=[a,\infty)\).
+        </p>
+
+        <textarea
+          class="reasoning-input"
+          id="reasoning-input"
+          rows="6"
+          placeholder="Example:
+Since $|x^2-b|\ge 0$ and $c>0$,
+$$f(x)=a+c|x^2-b|\ge a.$$
+Minimum at $x^2=b\Rightarrow f_{\min}=a$.
+Therefore $Dom(f)=(-\infty,\infty)$ and $Range(f)=[a,\infty)$."
+        ></textarea>
+
+        <div class="latex-validation hidden" id="latex-validation"></div>
+        <div class="math-preview">
+          <div class="math-preview-label">Live Preview:</div>
+          <div id="math-preview-content">
+            Your mathematical notation will appear here as you type...
+          </div>
+        </div>
+        <div class="reasoning-feedback" id="reasoning-feedback"></div>
+      </div>
+
+      <!-- Status row -->
+      <div class="input-status">
+        <div class="status-item">
+          <span id="ans1-status-icon" class="status-cross">✗</span
+          ><span>Domain answer provided</span>
+        </div>
+        <div class="status-item">
+          <span id="ans2-status-icon" class="status-cross">✗</span
+          ><span>Range answer provided</span>
+        </div>
+        <div class="status-item">
+          <span id="reasoning-status-icon" class="status-cross">✗</span
+          ><span>Reasoning provided</span>
+        </div>
+        <div class="status-item">
+          <span id="latex-status-icon" class="status-cross">✗</span
+          ><span>Valid LaTeX syntax</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="action-buttons">
+        <button class="button primary" id="check-answer" disabled>
+          Check Solution
+        </button>
+        <button class="button secondary" id="show-solution">
+          Show Solution
+        </button>
+        <button class="button secondary" id="show-steps">Show Steps</button>
+        <button class="button success" id="clear-all">Clear All</button>
+      </div>
+
+      <!-- AI feedback -->
+      <div class="ai-feedback-enhanced hidden" id="ai-feedback-enhanced">
+        <h4>AI Feedback</h4>
+        <div
+          class="ai-feedback-content-enhanced"
+          id="ai-feedback-content-enhanced"
+        ></div>
+      </div>
+
+      <!-- Hints -->
+      <div class="custom-hint hidden" id="hint">
+        <h4>Helpful Hints</h4>
+        <div class="step">
+          <div class="step-title">For Domain:</div>
+          <p>
+            Squares and absolute values are defined for all \(x\in\mathbb{R}\).
+          </p>
+          <p>Thus \(Dom(f)=(-\infty,\infty)\).</p>
+        </div>
+        <div class="step">
+          <div class="step-title">For Range:</div>
+          <p>\(|x^2-b|\ge 0\) and \(c>0\Rightarrow f(x)\ge a\).</p>
+          <p>
+            Minimum at \(x^2=b\Rightarrow f_{\min}=a\), so
+            \(Range(f)=[a,\infty)\).
+          </p>
+        </div>
+      </div>
+
+      <!-- Examples -->
+      <div class="custom-hint hidden" id="examples">
+        <h4>Example Solutions</h4>
+        <div class="step">
+          <div class="step-title">Example 1:</div>
+          <p>
+            If \(f(x)=2+3|x^2-4|\): \(Dom(f)=(-\infty,\infty)\),
+            \(Range(f)=[2,\infty)\).
+          </p>
+        </div>
+        <div class="step">
+          <div class="step-title">Example 2:</div>
+          <p>
+            If \(f(x)=-1+2|x^2-9|\): \(Dom(f)=(-\infty,\infty)\),
+            \(Range(f)=[-1,\infty)\).
+          </p>
+        </div>
+      </div>
+
+      <!-- Outcome areas -->
+      <div class="feedback hidden" id="feedback"></div>
+
+      <div class="step-by-step hidden" id="step-by-step">
+        <h3>Step-by-Step Solution</h3>
+        <div id="steps-content"></div>
+      </div>
+
+      <div class="solution hidden" id="solution">
+        <h3>Complete Solution</h3>
+        <div id="solution-content"></div>
+      </div>
+    </div>
+
+    <!-- Shared scripts -->
+    <script src="../../js/app.js"></script>
+    <script src="../../js/ai-render.js"></script>
+    <script src="../../js/openai-service.js"></script>
+
+    <!-- Page logic -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // DOM refs
+        const ans1Input = document.getElementById("ans1");
+        const ans2Input = document.getElementById("ans2");
+        const preview1 = document.getElementById("preview-ans1");
+        const preview2 = document.getElementById("preview-ans2");
+        const previewContent1 = preview1.querySelector(
+          ".domain-range-preview-content"
+        );
+        const previewContent2 = preview2.querySelector(
+          ".domain-range-preview-content"
+        );
+        const validation1 = document.getElementById("validation-ans1");
+        const validation2 = document.getElementById("validation-ans2");
+        const reasoningInput = document.getElementById("reasoning-input");
+        const mathPreviewContent = document.getElementById(
+          "math-preview-content"
+        );
+        const latexValidation = document.getElementById("latex-validation");
+        const checkAnswerBtn = document.getElementById("check-answer");
+        const showSolutionBtn = document.getElementById("show-solution");
+        const showStepsBtn = document.getElementById("show-steps");
+        const clearAllBtn = document.getElementById("clear-all");
+        const newQuestionBtn = document.getElementById("new-question");
+        const showHintsBtn = document.getElementById("show-hints");
+        const fillExamplesBtn = document.getElementById("fill-examples");
+
+        const ans1Status = document.getElementById("ans1-status-icon");
+        const ans2Status = document.getElementById("ans2-status-icon");
+        const reasoningStatus = document.getElementById(
+          "reasoning-status-icon"
+        );
+        const latexStatus = document.getElementById("latex-status-icon");
+
+        const functionDisplay = document.getElementById("function-display");
+        const functionDisplay2 = document.getElementById("function-display-2");
+        const feedbackArea = document.getElementById("feedback");
+        const stepByStepArea = document.getElementById("step-by-step");
+        const solutionArea = document.getElementById("solution");
+        const stepsContent = document.getElementById("steps-content");
+        const solutionContent = document.getElementById("solution-content");
+        const aiFeedbackArea = document.getElementById("ai-feedback-enhanced");
+        const aiFeedbackContent = document.getElementById(
+          "ai-feedback-content-enhanced"
+        );
+        const hintArea = document.getElementById("hint");
+        const examplesArea = document.getElementById("examples");
+
+        // Question bank — LaTeX answers only
+        const questionBank = [
+          {
+            a: 1,
+            b: 1,
+            c: 1,
+            domain: "(-\\infty,\\infty)",
+            range: "[1,\\infty)",
+            steps: [
+              "The function contains x^2 and absolute value, both defined for all real numbers",
+              "No division-by-zero/square-root restriction",
+              "Therefore, Dom(f) = (-\\infty,\\infty)",
+              "Since |x^2-1|\\ge 0 and c=1>0, f(x)\\ge 1",
+              "Minimum at |x^2-1|=0 (x^2=1)",
+              "As |x|\\to\\infty, |x^2-1|\\to\\infty",
+              "Therefore, Range(f) = [1,\\infty)",
+            ],
+          },
+          {
+            a: 2,
+            b: 4,
+            c: 3,
+            domain: "(-\\infty,\\infty)",
+            range: "[2,\\infty)",
+            steps: [
+              "x^2 and |.| are defined for all x",
+              "No extra restrictions",
+              "Thus Dom(f)=(-\\infty,\\infty)",
+              "|x^2-4|\\ge 0 and c=3>0 \\Rightarrow f(x)\\ge 2",
+              "Min at x^2=4",
+              "As |x|\\to\\infty, f(x)\\to\\infty",
+              "Hence Range(f)=[2,\\infty)",
+            ],
+          },
+          {
+            a: -1,
+            b: 9,
+            c: 2,
+            domain: "(-\\infty,\\infty)",
+            range: "[-1,\\infty)",
+            steps: [
+              "Defined for all real x",
+              "So Dom(f)=(-\\infty,\\infty)",
+              "|x^2-9|\\ge 0 and c=2>0 \\Rightarrow f(x)\\ge -1",
+              "Min at x^2=9",
+              "As |x|\\to\\infty, f(x)\\to\\infty",
+              "Hence Range(f)=[-1,\\infty)",
+            ],
+          },
+        ];
+
+        let currentQuestionIndex = 0;
+
+        function currentQ() {
+          return questionBank[currentQuestionIndex];
+        }
+
+        function initQuiz() {
+          updateQuestionDisplay();
+          setupEventListeners();
+          updateInputStatus();
+          updatePreview(ans1Input, previewContent1, preview1);
+          updatePreview(ans2Input, previewContent2, preview2);
+        }
+
+        function updateQuestionDisplay() {
+          const q = currentQ();
+          const fn = `${q.a} + ${q.c}\\,\\lvert x^2 - ${q.b}\\rvert`;
+          functionDisplay.innerHTML = `\\( f(x) = ${fn} \\)`;
+          functionDisplay2.innerHTML = `\\( f(x) = ${fn} \\)`;
+          if (window.MathJax)
+            MathJax.typesetPromise([functionDisplay, functionDisplay2]);
+        }
+
+        function setupEventListeners() {
+          ans1Input.addEventListener("input", () => {
+            updatePreview(ans1Input, previewContent1, preview1);
+            updateInputStatus();
+          });
+          ans2Input.addEventListener("input", () => {
+            updatePreview(ans2Input, previewContent2, preview2);
+            updateInputStatus();
+          });
+          reasoningInput.addEventListener("input", () => {
+            updateMathPreview();
+            updateInputStatus();
+          });
+
+          checkAnswerBtn.addEventListener("click", checkAnswers);
+          showSolutionBtn.addEventListener("click", showSolution);
+          showStepsBtn.addEventListener("click", showSteps);
+          clearAllBtn.addEventListener("click", clearAll);
+          newQuestionBtn.addEventListener("click", generateNewQuestion);
+          showHintsBtn.addEventListener("click", toggleHints);
+          fillExamplesBtn.addEventListener("click", fillWithExamples);
+        }
+
+        // ========== PREVIEW (LaTeX only) ==========
+        function ensureWrappedLatex(s) {
+          const trimmed = s.trim();
+          const wrapped =
+            /^\\\(|^\\\[|^\$/.test(trimmed) && /\)\\$|\]\\$|\$$/.test(trimmed);
+          return wrapped ? trimmed : `\\(${trimmed}\\)`;
+        }
+
+        function updatePreview(input, previewContent, previewContainer) {
+          const value = input.value.trim();
+          if (!value) {
+            previewContent.innerHTML =
+              '<span class="domain-range-preview-placeholder">Type a LaTeX interval like (-\\infty,\\infty)</span>';
+            previewContainer.classList.remove(
+              "preview-valid",
+              "preview-invalid"
+            );
+            return;
+          }
+          try {
+            const latex = ensureWrappedLatex(value);
+            previewContent.innerHTML = latex;
+            previewContainer.classList.add("preview-valid");
+            previewContainer.classList.remove("preview-invalid");
+            if (window.MathJax) {
+              MathJax.typesetPromise([previewContent]).catch(() => {
+                previewContent.innerHTML =
+                  '<span style="color:#dc3545;">Invalid LaTeX</span>';
+                previewContainer.classList.remove("preview-valid");
+                previewContainer.classList.add("preview-invalid");
+              });
+            }
+          } catch (e) {
+            previewContent.innerHTML =
+              '<span style="color:#dc3545;">Error rendering</span>';
+            previewContainer.classList.remove("preview-valid");
+            previewContainer.classList.add("preview-invalid");
+          }
+        }
+
+        // ========== Reasoning preview ==========
+        function updateMathPreview() {
+          const value = reasoningInput.value.trim();
+          if (!value) {
+            mathPreviewContent.textContent =
+              "Your mathematical notation will appear here as you type...";
+            latexValidation.classList.add("hidden");
+            setStatusIcon(latexStatus, false);
+            return;
+          }
+          const validation = window.MathUtils?.validateLatexSyntax
+            ? window.MathUtils.validateLatexSyntax(value)
+            : { isValid: true, errors: [] };
+
+          setStatusIcon(latexStatus, validation.isValid);
+          if (validation.isValid) {
+            latexValidation.innerHTML =
+              '<span class="latex-valid">✓ Valid LaTeX syntax</span>';
+            latexValidation.classList.remove("hidden");
+            mathPreviewContent.innerHTML = value;
+            if (window.MathJax) MathJax.typesetPromise([mathPreviewContent]);
+          } else {
+            latexValidation.innerHTML = `<span class="latex-invalid">✗ LaTeX errors: ${validation.errors.join(
+              ", "
+            )}</span>`;
+            latexValidation.classList.remove("hidden");
+            mathPreviewContent.textContent =
+              "Your mathematical notation will appear here as you type...";
+          }
+        }
+
+        // ========== Status / Enable button ==========
+        function updateInputStatus() {
+          const a1 = !!ans1Input.value.trim();
+          const a2 = !!ans2Input.value.trim();
+          const r = !!reasoningInput.value.trim();
+          setStatusIcon(ans1Status, a1);
+          setStatusIcon(ans2Status, a2);
+          setStatusIcon(reasoningStatus, r);
+          checkAnswerBtn.disabled = !(a1 && a2 && r);
+        }
+        function setStatusIcon(el, good) {
+          el.textContent = good ? "✓" : "✗";
+          el.className = good ? "status-check" : "status-cross";
+        }
+
+        // ========== Comparison helpers (LaTeX core) ==========
+        function stripWrappers(s) {
+          return s
+            .replace(/^\s*(\\\(|\\\[|\$)\s*/, "")
+            .replace(/\s*(\\\)|\\\]|\$)\s*$/, "");
+        }
+        function normalizeCore(s) {
+          return stripWrappers(s).replace(/\s+/g, "");
+        }
+
+        // ========== Check answers + AI ==========
+        function checkAnswers() {
+          const q = currentQ();
+          const userDom = ans1Input.value.trim();
+          const userRan = ans2Input.value.trim();
+          const reasoning = reasoningInput.value.trim();
+
+          // Compare LaTeX cores
+          const domOK = normalizeCore(userDom) === normalizeCore(q.domain);
+          const ranOK = normalizeCore(userRan) === normalizeCore(q.range);
+
+          validation1.textContent = domOK
+            ? "✓ Correct!"
+            : "✗ Incorrect. Try again.";
+          validation1.style.color = domOK ? "#28a745" : "#dc3545";
+          validation2.textContent = ranOK
+            ? "✓ Correct!"
+            : "✗ Incorrect. Try again.";
+          validation2.style.color = ranOK ? "#28a745" : "#dc3545";
+
+          const allCorrect = domOK && ranOK;
+          feedbackArea.textContent = allCorrect
+            ? "Great job! Both domain and range are correct."
+            : "Some answers need correction. Check the hints or solution for help.";
+          feedbackArea.className = allCorrect
+            ? "feedback correct"
+            : "feedback incorrect";
+          feedbackArea.classList.remove("hidden");
+
+          generateAIFeedback(allCorrect, reasoning, userDom, userRan, q);
+        }
+
+        async function generateAIFeedback(
+          isCorrect,
+          reasoning,
+          userDom,
+          userRan,
+          q
+        ) {
+          try {
+            const questionData = {
+              question:
+                "Find the domain and range of f(x) = a + c|x^2 - b| with c>0.",
+              parameters: { a: q.a, b: q.b, c: q.c },
+              correctAnswer: { domain: q.domain, range: q.range }, // LaTeX
+            };
+            const userAnswer = { domain: userDom, range: userRan }; // LaTeX
+
+            const feedback = await window.openAIService.generateFeedback(
+              questionData,
+              userAnswer,
+              reasoning,
+              isCorrect
+            );
+
+            if (window.AIRender?.renderCard) {
+              aiFeedbackContent.innerHTML =
+                window.AIRender.renderCard(feedback);
+            } else if (window.AIRender?.build) {
+              aiFeedbackContent.innerHTML = window.AIRender.build(feedback);
+            } else {
+              aiFeedbackContent.innerHTML = `<p>${
+                feedback?.summary || "Feedback"
+              }</p>`;
+            }
+
+            aiFeedbackArea.classList.remove("hidden");
+            if (window.MathJax) MathJax.typesetPromise([aiFeedbackContent]);
+          } catch (err) {
+            console.error("AI feedback error:", err);
+            aiFeedbackContent.innerHTML =
+              "<p>Unable to generate AI feedback at this time.</p>";
+            aiFeedbackArea.classList.remove("hidden");
+          }
+        }
+
+        // ========== Solution / Steps / Misc ==========
+        function showSolution() {
+          const q = currentQ();
+          solutionContent.innerHTML = `
+            <div class="step">
+              <div class="step-title">Domain</div>
+              <p>Squares and absolute values are defined for all \\(x\\in\\mathbb{R}\\).</p>
+              <p>Therefore \\(Dom(f)=(-\\infty,\\infty)\\).</p>
+            </div>
+            <div class="step">
+              <div class="step-title">Range</div>
+              <p>Since \\(|x^2-${q.b}|\\ge 0\\) and \\(${
+            q.c
+          }>0\\), we have \\(f(x)\\ge ${q.a}\\).</p>
+              <p>Minimum when \\(|x^2-${q.b}|=0\\Rightarrow f_{\\min}=${
+            q.a
+          }\\).</p>
+              <p>Hence \\(Range(f)=${ensureWrappedLatex(q.range)}\\).</p>
+            </div>`;
+          solutionArea.classList.remove("hidden");
+          if (window.MathJax) MathJax.typesetPromise([solutionContent]);
+        }
+
+        function showSteps() {
+          const q = currentQ();
+          stepsContent.innerHTML = `
+            <div class="step">
+              <div class="step-title">Domain</div>
+              <p>Given: \\( f(x) = ${q.a} + ${q.c}|x^2 - ${q.b}| \\)</p>
+              <ol>${q.steps
+                .slice(0, 3)
+                .map((s) => `<li>${s}</li>`)
+                .join("")}</ol>
+              <p>Final: \\( Dom(f) = (-\\infty,\\infty) \\)</p>
+            </div>
+            <div class="step">
+              <div class="step-title">Range</div>
+              <p>Given: \\( f(x) = ${q.a} + ${q.c}|x^2 - ${q.b}| \\)</p>
+              <ol>${q.steps
+                .slice(3)
+                .map((s) => `<li>${s}</li>`)
+                .join("")}</ol>
+              <p>Final: \\( Range(f) = ${ensureWrappedLatex(q.range)} \\)</p>
+            </div>`;
+          stepByStepArea.classList.remove("hidden");
+          if (window.MathJax) MathJax.typesetPromise([stepsContent]);
+        }
+
+        function clearAll() {
+          ans1Input.value = "";
+          ans2Input.value = "";
+          reasoningInput.value = "";
+          validation1.textContent = "";
+          validation2.textContent = "";
+          feedbackArea.classList.add("hidden");
+          stepByStepArea.classList.add("hidden");
+          solutionArea.classList.add("hidden");
+          aiFeedbackArea.classList.add("hidden");
+          hintArea.classList.add("hidden");
+          examplesArea.classList.add("hidden");
+          updatePreview(ans1Input, previewContent1, preview1);
+          updatePreview(ans2Input, previewContent2, preview2);
+          updateMathPreview();
+          updateInputStatus();
+        }
+
+        function generateNewQuestion() {
+          currentQuestionIndex =
+            (currentQuestionIndex + 1) % questionBank.length;
+          updateQuestionDisplay();
+          clearAll();
+        }
+
+        function toggleHints() {
+          if (hintArea.classList.contains("hidden")) {
+            hintArea.classList.remove("hidden");
+            examplesArea.classList.add("hidden");
+          } else {
+            hintArea.classList.add("hidden");
+          }
+        }
+
+        function fillWithExamples() {
+          const q = currentQ();
+          ans1Input.value = "(-\\infty,\\infty)";
+          ans2Input.value = q.range;
+          reasoningInput.value = `Since $|x^2 - ${q.b}| \\ge 0$ for all real $x$ and $c=${q.c}>0$,
+$$f(x)=${q.a}+${q.c}|x^2-${q.b}|\\ge ${q.a}.$$
+Minimum at $x^2=${q.b}$ gives $f_{\\min}=${q.a}$.
+Therefore $Dom(f)=(-\\infty,\\infty)$ and $Range(f)=${q.range}.`;
+          updatePreview(ans1Input, previewContent1, preview1);
+          updatePreview(ans2Input, previewContent2, preview2);
+          updateMathPreview();
+          updateInputStatus();
+        }
+
+        // Kick off
+        initQuiz();
+      });
+    </script>
+  </body>
+</html>

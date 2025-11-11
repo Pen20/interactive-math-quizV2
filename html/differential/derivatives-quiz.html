@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Derivatives Quiz - Interactive Math Quiz</title>
+
+    <!-- Shared styles -->
+    <link rel="stylesheet" href="../../css/style.css" />
+    <link rel="stylesheet" href="../../css/quiz-common.css" />
+
+    <!-- Polyfill + MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [
+            ["$", "$"],
+            ["\\(", "\\)"],
+          ],
+          displayMath: [
+            ["\\[", "\\]"],
+            ["$$", "$$"],
+          ],
+        },
+        options: {
+          skipHtmlTags: [
+            "script",
+            "noscript",
+            "style",
+            "textarea",
+            "pre",
+            "code",
+          ],
+        },
+      };
+    </script>
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
+    ></script>
+
+    <style>
+      /* Enhanced styling for better display */
+      .quiz-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .quiz-title {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 15px;
+      }
+
+      .problem-statement {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        border-left: 4px solid #3498db;
+      }
+
+      .problem-statement h4 {
+        margin-top: 0;
+        color: #2c3e50;
+      }
+
+      .derivative-parts {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 25px;
+        margin: 25px 0;
+      }
+
+      @media (min-width: 768px) {
+        .derivative-parts {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .derivative-part {
+        background: #ffffff;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-top: 4px solid #667eea;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .derivative-part:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .derivative-part h4 {
+        margin-bottom: 20px;
+        color: #2c3e50;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .function-display {
+        font-size: 1.2em;
+        margin: 20px 0;
+        text-align: center;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+      }
+
+      .derivative-input {
+        margin: 20px 0;
+      }
+
+      .derivative-input label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .derivative-input input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        font-size: 16px;
+        font-family: "Courier New", monospace;
+        transition: border-color 0.3s, box-shadow 0.3s;
+      }
+
+      .derivative-input input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .validation {
+        margin-top: 8px;
+        font-size: 14px;
+        min-height: 20px;
+      }
+
+      /* New styles for derivative preview */
+      .derivative-preview {
+        margin-top: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+        min-height: 60px;
+        transition: all 0.3s ease;
+      }
+
+      .derivative-preview-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #2c3e50;
+        font-size: 14px;
+      }
+
+      .derivative-preview-content {
+        min-height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+      }
+
+      .derivative-preview-placeholder {
+        color: #6c757d;
+        font-style: italic;
+      }
+
+      .preview-valid {
+        border-left: 4px solid #28a745;
+        background-color: #f0fff4;
+      }
+
+      .preview-invalid {
+        border-left: 4px solid #dc3545;
+        background-color: #fff5f5;
+      }
+
+      .formula-reminder {
+        background: #e8f4fd;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 25px 0;
+        border-left: 4px solid #3498db;
+      }
+
+      .formula-reminder h5 {
+        margin-top: 0;
+        color: #2c3e50;
+      }
+
+      .formula-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 15px;
+        margin-top: 15px;
+      }
+
+      @media (min-width: 768px) {
+        .formula-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .formula-grid > div {
+        padding: 15px;
+        background: white;
+        border-radius: 6px;
+      }
+
+      .formula-grid p {
+        margin: 8px 0;
+      }
+
+      .help-section {
+        margin: 20px 0;
+        text-align: center;
+      }
+
+      .button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s;
+      }
+
+      .button.primary {
+        background-color: #3498db;
+        color: white;
+      }
+
+      .button.secondary {
+        background-color: #6c757d;
+        color: white;
+      }
+
+      .button.success {
+        background-color: #28a745;
+        color: white;
+      }
+
+      .button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .reasoning-section {
+        margin: 30px 0;
+        padding: 25px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #17a2b8;
+      }
+
+      .reasoning-section h3 {
+        margin-top: 0;
+        color: #2c3e50;
+      }
+
+      .math-help {
+        margin: 20px 0;
+      }
+
+      .math-examples {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-top: 15px;
+      }
+
+      @media (min-width: 768px) {
+        .math-examples {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .math-example {
+        padding: 10px;
+        background: white;
+        border-radius: 4px;
+        border-left: 3px solid #17a2b8;
+        font-size: 14px;
+      }
+
+      .reasoning-input {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        font-size: 16px;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        resize: vertical;
+        transition: border-color 0.3s;
+      }
+
+      .reasoning-input:focus {
+        outline: none;
+        border-color: #17a2b8;
+      }
+
+      .latex-validation {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 4px;
+      }
+
+      .math-preview {
+        margin-top: 20px;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        min-height: 100px;
+      }
+
+      .math-preview-label {
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #2c3e50;
+      }
+
+      .input-status {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin: 25px 0;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+      }
+
+      .status-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .status-check {
+        color: #28a745;
+        font-weight: bold;
+      }
+
+      .status-cross {
+        color: #dc3545;
+        font-weight: bold;
+      }
+
+      .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 25px 0;
+      }
+
+      .ai-feedback-enhanced {
+        margin: 25px 0;
+        padding: 25px;
+        background: #e8f4fd;
+        border-radius: 8px;
+        border-left: 4px solid #3498db;
+      }
+
+      .ai-feedback-enhanced h4 {
+        margin-top: 0;
+        color: #2c3e50;
+      }
+
+      .custom-hint {
+        margin: 25px 0;
+        padding: 25px;
+        background: #fff3cd;
+        border-radius: 8px;
+        border-left: 4px solid #ffc107;
+      }
+
+      .custom-hint h4 {
+        margin-top: 0;
+        color: #856404;
+      }
+
+      .step {
+        margin: 20px 0;
+      }
+
+      .step-title {
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #2c3e50;
+      }
+
+      .feedback,
+      .step-by-step,
+      .solution {
+        margin: 25px 0;
+        padding: 25px;
+        border-radius: 8px;
+      }
+
+      .feedback {
+        background: #d4edda;
+        border-left: 4px solid #28a745;
+      }
+
+      .step-by-step {
+        background: #e2e3e5;
+        border-left: 4px solid #6c757d;
+      }
+
+      .solution {
+        background: #d1ecf1;
+        border-left: 4px solid #17a2b8;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .back-button {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .back-button:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="quiz-container">
+      <!-- Back to the Differential Calculus menu -->
+      <a href="/html/differential/" class="back-button"
+        >← Back to Differential Calculus</a
+      >
+
+      <h1 class="quiz-title">
+        Derivatives of Logarithmic and Trigonometric Functions
+      </h1>
+
+      <div class="question-text">
+        <div class="problem-statement">
+          <h4>Problem Statement:</h4>
+          <p>Find the derivatives for the following functions:</p>
+        </div>
+
+        <div class="help-section">
+          <button class="button secondary" id="new-question">
+            Generate New Question
+          </button>
+          <button class="button secondary" id="fill-examples">
+            Fill with Examples
+          </button>
+        </div>
+
+        <div class="derivative-parts">
+          <!-- Part 1: Trigonometric Function -->
+          <div class="derivative-part">
+            <h4>Part 1: Trigonometric Function</h4>
+            <div class="function-display">
+              <p>
+                Given:
+                <span id="function1-display"
+                  >\( f(x) = 3\cos(2x) + 4\sin(3x) \)</span
+                >
+              </p>
+            </div>
+            <div class="derivative-input">
+              <label for="answer1">Find \( f'(x) \):</label>
+              <input
+                type="text"
+                id="answer1"
+                placeholder="Enter derivative..."
+              />
+              <div class="validation" id="validation-answer1"></div>
+
+              <!-- New Derivative Preview for Part 1 -->
+              <div class="derivative-preview" id="preview-answer1">
+                <div class="derivative-preview-label">Live Preview:</div>
+                <div class="derivative-preview-content">
+                  <span class="derivative-preview-placeholder">
+                    Your derivative will appear here as you type...
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Part 2: Logarithmic Function -->
+          <div class="derivative-part">
+            <h4>Part 2: Logarithmic Function</h4>
+            <div class="function-display">
+              <p>
+                Given:
+                <span id="function2-display"
+                  >\( g(y) = \ln(2y^2 + 3y + 1) \)</span
+                >
+              </p>
+            </div>
+            <div class="derivative-input">
+              <label for="answer2">Find \( g'(y) \):</label>
+              <input
+                type="text"
+                id="answer2"
+                placeholder="Enter derivative..."
+              />
+              <div class="validation" id="validation-answer2"></div>
+
+              <!-- New Derivative Preview for Part 2 -->
+              <div class="derivative-preview" id="preview-answer2">
+                <div class="derivative-preview-label">Live Preview:</div>
+                <div class="derivative-preview-content">
+                  <span class="derivative-preview-placeholder">
+                    Your derivative will appear here as you type...
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="formula-reminder">
+          <h5>Useful Derivative Formulas:</h5>
+          <div class="formula-grid">
+            <div>
+              <p><strong>Trigonometric:</strong></p>
+              <p>\(\frac{d}{dx}[\cos(ax)] = -a\sin(ax)\)</p>
+              <p>\(\frac{d}{dx}[\sin(bx)] = b\cos(bx)\)</p>
+            </div>
+            <div>
+              <p><strong>Logarithmic:</strong></p>
+              <p>\(\frac{d}{dx}[\ln(u(x))] = \frac{u'(x)}{u(x)}\)</p>
+              <p>
+                Chain Rule: \(\frac{d}{dx}[f(g(x))] = f'(g(x)) \cdot g'(x)\)
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <button class="button secondary" id="show-hints">
+            Need Help? Show Hints
+          </button>
+        </div>
+
+        <!-- Reasoning with LaTeX preview -->
+        <div class="reasoning-section">
+          <h3>Explain Your Reasoning</h3>
+          <p>
+            Please describe the steps you took to find each derivative. You can
+            use mathematical notation:
+          </p>
+
+          <div class="math-help">
+            <h5>Mathematical Notation Help:</h5>
+            <div class="math-examples">
+              <div class="math-example">
+                <strong>Derivative:</strong> $f'(x)$, $\frac{df}{dx}$
+              </div>
+              <div class="math-example">
+                <strong>Chain rule:</strong> $\frac{d}{dx}[f(g(x))] = f'(g(x))
+                \cdot g'(x)$
+              </div>
+              <div class="math-example">
+                <strong>Trig derivatives:</strong> $\frac{d}{dx}[\cos(ax)] =
+                -a\sin(ax)$
+              </div>
+              <div class="math-example">
+                <strong>Log derivative:</strong> $\frac{d}{dx}[\ln(u)] =
+                \frac{u'}{u}$
+              </div>
+              <div class="math-example">
+                <strong>Step-by-step:</strong> $f'(x) = 3 \cdot (-2\sin(2x)) + 4
+                \cdot (3\cos(3x))$
+              </div>
+              <div class="math-example">
+                <strong>Simplification:</strong> $f'(x) = -6\sin(2x) +
+                12\cos(3x)$
+              </div>
+            </div>
+            <p style="margin-top: 10px; font-size: 14px">
+              <strong>Usage:</strong> Use <code>$...$</code> for inline math and
+              <code>$$...$$</code> for display math.
+            </p>
+          </div>
+
+          <textarea
+            class="reasoning-input"
+            id="reasoning-input"
+            rows="6"
+            placeholder="Enter your step-by-step reasoning here. Use $...$ for inline math and $$...$$ for display math.&#10;&#10;Example for Part 1:&#10;Using the chain rule:&#10;$$\frac{d}{dx}[3\cos(2x)] = 3 \cdot (-2\sin(2x)) = -6\sin(2x)$$&#10;$$\frac{d}{dx}[4\sin(3x)] = 4 \cdot (3\cos(3x)) = 12\cos(3x)$$&#10;So $f'(x) = -6\sin(2x) + 12\cos(3x)$&#10;&#10;Example for Part 2:&#10;Using the chain rule for logarithms:&#10;$$g'(y) = \frac{d}{dy}[\ln(u(y))] = \frac{u'(y)}{u(y)}$$&#10;Where $u(y) = 2y^2 + 3y + 1$ and $u'(y) = 4y + 3$&#10;So $g'(y) = \frac{4y + 3}{2y^2 + 3y + 1}$"
+          ></textarea>
+
+          <div class="latex-validation hidden" id="latex-validation"></div>
+
+          <div class="math-preview">
+            <div class="math-preview-label">Live Preview:</div>
+            <div id="math-preview-content">
+              Your mathematical notation will appear here as you type...
+            </div>
+          </div>
+
+          <div class="reasoning-feedback" id="reasoning-feedback"></div>
+        </div>
+
+        <!-- Input status row -->
+        <div class="input-status">
+          <div class="status-item">
+            <span id="answer1-status-icon" class="status-cross">✗</span>
+            <span>Part 1 answer provided</span>
+          </div>
+          <div class="status-item">
+            <span id="answer2-status-icon" class="status-cross">✗</span>
+            <span>Part 2 answer provided</span>
+          </div>
+          <div class="status-item">
+            <span id="reasoning-status-icon" class="status-cross">✗</span>
+            <span>Reasoning provided</span>
+          </div>
+          <div class="status-item">
+            <span id="latex-status-icon" class="status-cross">✗</span>
+            <span>Valid LaTeX syntax</span>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="action-buttons">
+          <button class="button primary" id="check-answer" disabled>
+            Check Solution
+          </button>
+          <button class="button secondary" id="show-solution">
+            Show Solution
+          </button>
+          <button class="button secondary" id="show-steps">Show Steps</button>
+          <button class="button success" id="clear-all">Clear All</button>
+        </div>
+
+        <!-- AI feedback -->
+        <div class="ai-feedback-enhanced hidden" id="ai-feedback-enhanced">
+          <h4>AI Feedback</h4>
+          <div
+            class="ai-feedback-content-enhanced"
+            id="ai-feedback-content-enhanced"
+          ></div>
+        </div>
+
+        <!-- Hints -->
+        <div class="custom-hint hidden" id="hint">
+          <h4>Helpful Hints</h4>
+
+          <div class="step">
+            <div class="step-title">For Part 1 (Trigonometric Function):</div>
+            <p>
+              <strong>Hint 1:</strong> Use the chain rule for both cosine and
+              sine terms.
+            </p>
+            <p>
+              <strong>Hint 2:</strong> Remember: \(\frac{d}{dx}[\cos(ax)] =
+              -a\sin(ax)\)
+            </p>
+            <p>
+              <strong>Hint 3:</strong> Remember: \(\frac{d}{dx}[\sin(bx)] =
+              b\cos(bx)\)
+            </p>
+            <p>
+              <strong>Hint 4:</strong> Multiply by the constant coefficients.
+            </p>
+          </div>
+
+          <div class="step">
+            <div class="step-title">For Part 2 (Logarithmic Function):</div>
+            <p>
+              <strong>Hint 1:</strong> Use the chain rule:
+              \(\frac{d}{dy}[\ln(u(y))] = \frac{u'(y)}{u(y)}\)
+            </p>
+            <p>
+              <strong>Hint 2:</strong> First find the derivative of the inside
+              function \(u(y)\).
+            </p>
+            <p>
+              <strong>Hint 3:</strong> For a quadratic \(ay^2 + by + c\), the
+              derivative is \(2ay + b\).
+            </p>
+            <p>
+              <strong>Hint 4:</strong> Write your answer as a fraction with the
+              derivative in the numerator and original function in the
+              denominator.
+            </p>
+          </div>
+
+          <div class="step">
+            <div class="step-title">Common Mistakes to Avoid:</div>
+            <p>
+              • Forgetting the chain rule (multiplying by the derivative of the
+              inside function)
+            </p>
+            <p>• Mixing up the derivatives of sine and cosine</p>
+            <p>• Forgetting the negative sign in the derivative of cosine</p>
+            <p>• Not using the correct logarithmic derivative formula</p>
+            <p>• Simplifying incorrectly or not simplifying at all</p>
+          </div>
+        </div>
+
+        <!-- Examples -->
+        <div class="custom-hint hidden" id="examples">
+          <h4>Example Solutions</h4>
+
+          <div class="step">
+            <div class="step-title">Example 1 - Trigonometric:</div>
+            <p>If \(f(x) = 2\cos(3x) + 5\sin(4x)\)</p>
+            <p>Then \(f'(x) = 2 \cdot (-3\sin(3x)) + 5 \cdot (4\cos(4x))\)</p>
+            <p>\(f'(x) = -6\sin(3x) + 20\cos(4x)\)</p>
+          </div>
+
+          <div class="step">
+            <div class="step-title">Example 2 - Logarithmic:</div>
+            <p>If \(g(y) = \ln(y^2 + 2y + 3)\)</p>
+            <p>Let \(u(y) = y^2 + 2y + 3\), so \(u'(y) = 2y + 2\)</p>
+            <p>
+              Then \(g'(y) = \frac{u'(y)}{u(y)} = \frac{2y + 2}{y^2 + 2y + 3}\)
+            </p>
+          </div>
+
+          <div class="step">
+            <div class="step-title">Common Answer Formats:</div>
+            <p>
+              <strong>For Part 1:</strong>
+              <code>\( -6 \sin(2x) + 12 \cos(3x) \)</code>
+            </p>
+
+            <p>
+              <strong>For Part 2:</strong>
+              <code>\( \frac{4 y + 3}{2y^2 + 3y + 1} \)</code>
+            </p>
+            <p>
+              <strong>Alternative formats:</strong> Spaces and different
+              multiplication signs are usually accepted.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Outcome areas -->
+      <div class="feedback hidden" id="feedback"></div>
+
+      <div class="step-by-step hidden" id="step-by-step">
+        <h3>Step-by-Step Solution</h3>
+        <div id="steps-content"></div>
+      </div>
+
+      <div class="solution hidden" id="solution">
+        <h3>Complete Solution</h3>
+        <div id="solution-content"></div>
+      </div>
+    </div>
+
+    <!-- Load shared scripts first -->
+    <script src="../../js/app.js"></script>
+    <script src="../../js/ai-render.js"></script>
+    <script src="../../js/openai-service.js"></script>
+
+    <!-- Page-specific logic -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Get references to DOM elements
+        const answer1Input = document.getElementById("answer1");
+        const answer2Input = document.getElementById("answer2");
+        const preview1 = document.getElementById("preview-answer1");
+        const preview2 = document.getElementById("preview-answer2");
+        const previewContent1 = preview1.querySelector(
+          ".derivative-preview-content"
+        );
+        const previewContent2 = preview2.querySelector(
+          ".derivative-preview-content"
+        );
+        const validation1 = document.getElementById("validation-answer1");
+        const validation2 = document.getElementById("validation-answer2");
+        const reasoningInput = document.getElementById("reasoning-input");
+        const mathPreviewContent = document.getElementById(
+          "math-preview-content"
+        );
+        const latexValidation = document.getElementById("latex-validation");
+        const checkAnswerBtn = document.getElementById("check-answer");
+        const showSolutionBtn = document.getElementById("show-solution");
+        const showStepsBtn = document.getElementById("show-steps");
+        const clearAllBtn = document.getElementById("clear-all");
+        const newQuestionBtn = document.getElementById("new-question");
+        const showHintsBtn = document.getElementById("show-hints");
+        const fillExamplesBtn = document.getElementById("fill-examples");
+
+        // Status indicators
+        const answer1Status = document.getElementById("answer1-status-icon");
+        const answer2Status = document.getElementById("answer2-status-icon");
+        const reasoningStatus = document.getElementById(
+          "reasoning-status-icon"
+        );
+        const latexStatus = document.getElementById("latex-status-icon");
+
+        // Content areas
+        const function1Display = document.getElementById("function1-display");
+        const function2Display = document.getElementById("function2-display");
+        const feedbackArea = document.getElementById("feedback");
+        const stepByStepArea = document.getElementById("step-by-step");
+        const solutionArea = document.getElementById("solution");
+        const stepsContent = document.getElementById("steps-content");
+        const solutionContent = document.getElementById("solution-content");
+        const aiFeedbackArea = document.getElementById("ai-feedback-enhanced");
+        const aiFeedbackContent = document.getElementById(
+          "ai-feedback-content-enhanced"
+        );
+        const hintArea = document.getElementById("hint");
+        const examplesArea = document.getElementById("examples");
+
+        // Question bank
+        const questionBank = [
+          {
+            part1: {
+              function: "f(x) = 3\\cos(2x) + 4\\sin(3x)",
+              answer: "-6\\sin(2x) + 12\\cos(3x)",
+              steps: [
+                "Apply the chain rule to each term separately",
+                "For 3\\cos(2x): derivative = 3 \\cdot (-2\\sin(2x)) = -6\\sin(2x)",
+                "For 4\\sin(3x): derivative = 4 \\cdot (3\\cos(3x)) = 12\\cos(3x)",
+                "Combine the results: f'(x) = -6\\sin(2x) + 12\\cos(3x)",
+              ],
+            },
+            part2: {
+              function: "g(y) = \\ln(2y^2 + 3y + 1)",
+              answer: "\\frac{4y + 3}{2y^2 + 3y + 1}",
+              steps: [
+                "Use the chain rule for logarithms: \\frac{d}{dy}[\\ln(u(y))] = \\frac{u'(y)}{u(y)}",
+                "Let u(y) = 2y^2 + 3y + 1",
+                "Find u'(y) = 4y + 3",
+                "Apply the formula: g'(y) = \\frac{4y + 3}{2y^2 + 3y + 1}",
+              ],
+            },
+          },
+          {
+            part1: {
+              function: "f(x) = 2\\cos(4x) - 5\\sin(x)",
+              answer: "-8\\sin(4x) - 5\\cos(x)",
+              steps: [
+                "Apply the chain rule to each term separately",
+                "For 2\\cos(4x): derivative = 2 \\cdot (-4\\sin(4x)) = -8\\sin(4x)",
+                "For -5\\sin(x): derivative = -5 \\cdot (\\cos(x)) = -5\\cos(x)",
+                "Combine the results: f'(x) = -8\\sin(4x) - 5\\cos(x)",
+              ],
+            },
+            part2: {
+              function: "g(y) = \\ln(y^3 - 2y + 5)",
+              answer: "\\frac{3y^2 - 2}{y^3 - 2y + 5}",
+              steps: [
+                "Use the chain rule for logarithms: \\frac{d}{dy}[\\ln(u(y))] = \\frac{u'(y)}{u(y)}",
+                "Let u(y) = y^3 - 2y + 5",
+                "Find u'(y) = 3y^2 - 2",
+                "Apply the formula: g'(y) = \\frac{3y^2 - 2}{y^3 - 2y + 5}",
+              ],
+            },
+          },
+          {
+            part1: {
+              function: "f(x) = 5\\cos(3x) + 2\\sin(2x)",
+              answer: "-15\\sin(3x) + 4\\cos(2x)",
+              steps: [
+                "Apply the chain rule to each term separately",
+                "For 5\\cos(3x): derivative = 5 \\cdot (-3\\sin(3x)) = -15\\sin(3x)",
+                "For 2\\sin(2x): derivative = 2 \\cdot (2\\cos(2x)) = 4\\cos(2x)",
+                "Combine the results: f'(x) = -15\\sin(3x) + 4\\cos(2x)",
+              ],
+            },
+            part2: {
+              function: "g(y) = \\ln(4y^2 + y + 2)",
+              answer: "\\frac{8y + 1}{4y^2 + y + 2}",
+              steps: [
+                "Use the chain rule for logarithms: \\frac{d}{dy}[\\ln(u(y))] = \\frac{u'(y)}{u(y)}",
+                "Let u(y) = 4y^2 + y + 2",
+                "Find u'(y) = 8y + 1",
+                "Apply the formula: g'(y) = \\frac{8y + 1}{4y^2 + y + 2}",
+              ],
+            },
+          },
+        ];
+
+        // Current question index
+        let currentQuestionIndex = 0;
+
+        // Initialize the quiz
+        function initQuiz() {
+          updateQuestionDisplay();
+          setupEventListeners();
+          updateInputStatus();
+        }
+
+        // Update the question display with current question
+        function updateQuestionDisplay() {
+          const currentQuestion = questionBank[currentQuestionIndex];
+          function1Display.innerHTML = `\\( ${currentQuestion.part1.function} \\)`;
+          function2Display.innerHTML = `\\( ${currentQuestion.part2.function} \\)`;
+
+          // Re-render MathJax
+          if (window.MathJax) {
+            MathJax.typesetPromise([function1Display, function2Display]);
+          }
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+          // Input change listeners
+          answer1Input.addEventListener("input", function () {
+            updatePreview(answer1Input, previewContent1, preview1);
+            updateInputStatus();
+          });
+
+          answer2Input.addEventListener("input", function () {
+            updatePreview(answer2Input, previewContent2, preview2);
+            updateInputStatus();
+          });
+
+          reasoningInput.addEventListener("input", function () {
+            updateMathPreview();
+            updateInputStatus();
+          });
+
+          // Button click listeners
+          checkAnswerBtn.addEventListener("click", checkAnswers);
+          showSolutionBtn.addEventListener("click", showSolution);
+          showStepsBtn.addEventListener("click", showSteps);
+          clearAllBtn.addEventListener("click", clearAll);
+          newQuestionBtn.addEventListener("click", generateNewQuestion);
+          showHintsBtn.addEventListener("click", toggleHints);
+          fillExamplesBtn.addEventListener("click", fillWithExamples);
+        }
+
+        // Update preview for derivative inputs
+        function updatePreview(input, previewContent, previewContainer) {
+          const value = input.value.trim();
+
+          if (value === "") {
+            previewContent.innerHTML =
+              '<span class="derivative-preview-placeholder">Your derivative will appear here as you type...</span>';
+            previewContainer.classList.remove(
+              "preview-valid",
+              "preview-invalid"
+            );
+            return;
+          }
+
+          // Try to render the math
+          try {
+            // Wrap the input in math delimiters if not already present
+            let mathContent = value;
+            if (
+              !mathContent.startsWith("\\(") &&
+              !mathContent.endsWith("\\)") &&
+              !mathContent.startsWith("\\[") &&
+              !mathContent.endsWith("\\]") &&
+              !mathContent.startsWith("$") &&
+              !mathContent.endsWith("$")
+            ) {
+              mathContent = `\\( ${mathContent} \\)`;
+            }
+
+            previewContent.innerHTML = mathContent;
+            previewContainer.classList.add("preview-valid");
+            previewContainer.classList.remove("preview-invalid");
+
+            // Try to render with MathJax
+            if (window.MathJax) {
+              MathJax.typesetPromise([previewContent]).catch((err) => {
+                console.error("MathJax typeset error:", err);
+                previewContent.innerHTML =
+                  '<span style="color: #dc3545;">Invalid LaTeX syntax</span>';
+                previewContainer.classList.remove("preview-valid");
+                previewContainer.classList.add("preview-invalid");
+              });
+            }
+          } catch (err) {
+            console.error("Preview update error:", err);
+            previewContent.innerHTML =
+              '<span style="color: #dc3545;">Error rendering preview</span>';
+            previewContainer.classList.remove("preview-valid");
+            previewContainer.classList.add("preview-invalid");
+          }
+        }
+
+        // Update math preview for reasoning input
+        function updateMathPreview() {
+          const value = reasoningInput.value.trim();
+
+          if (value === "") {
+            mathPreviewContent.innerHTML =
+              "Your mathematical notation will appear here as you type...";
+            latexValidation.classList.add("hidden");
+            updateLatexStatus(false);
+            return;
+          }
+
+          // Validate LaTeX syntax
+          const validation = window.MathUtils.validateLatexSyntax(value);
+
+          if (validation.isValid) {
+            latexValidation.innerHTML =
+              '<span class="latex-valid">✓ Valid LaTeX syntax</span>';
+            latexValidation.classList.remove("hidden");
+            updateLatexStatus(true);
+
+            // Render the preview
+            mathPreviewContent.innerHTML = value;
+
+            // Try to render with MathJax
+            if (window.MathJax) {
+              MathJax.typesetPromise([mathPreviewContent]).catch((err) => {
+                console.error("MathJax typeset error:", err);
+                mathPreviewContent.innerHTML =
+                  '<span style="color: #dc3545;">Error rendering LaTeX</span>';
+              });
+            }
+          } else {
+            latexValidation.innerHTML = `<span class="latex-invalid">✗ LaTeX errors: ${validation.errors.join(
+              ", "
+            )}</span>`;
+            latexValidation.classList.remove("hidden");
+            updateLatexStatus(false);
+            mathPreviewContent.innerHTML =
+              "Your mathematical notation will appear here as you type...";
+          }
+        }
+
+        // Update input status indicators
+        function updateInputStatus() {
+          // Check if answers are provided
+          const answer1Provided = answer1Input.value.trim() !== "";
+          const answer2Provided = answer2Input.value.trim() !== "";
+          const reasoningProvided = reasoningInput.value.trim() !== "";
+
+          // Update status icons
+          updateStatusIcon(answer1Status, answer1Provided);
+          updateStatusIcon(answer2Status, answer2Provided);
+          updateStatusIcon(reasoningStatus, reasoningProvided);
+
+          // Enable/disable check answer button
+          checkAnswerBtn.disabled = !(
+            answer1Provided &&
+            answer2Provided &&
+            reasoningProvided
+          );
+        }
+
+        // Update Latex status
+        function updateLatexStatus(isValid) {
+          updateStatusIcon(latexStatus, isValid);
+        }
+
+        // Update a status icon
+        function updateStatusIcon(element, isGood) {
+          if (isGood) {
+            element.textContent = "✓";
+            element.className = "status-check";
+          } else {
+            element.textContent = "✗";
+            element.className = "status-cross";
+          }
+        }
+
+        // Check answers
+        function checkAnswers() {
+          const currentQuestion = questionBank[currentQuestionIndex];
+          const userAnswer1 = answer1Input.value.trim();
+          const userAnswer2 = answer2Input.value.trim();
+          const reasoning = reasoningInput.value.trim();
+
+          // Simple validation - in a real app, you'd use a more sophisticated approach
+          const isAnswer1Correct =
+            normalizeAnswer(userAnswer1) ===
+            normalizeAnswer(currentQuestion.part1.answer);
+          const isAnswer2Correct =
+            normalizeAnswer(userAnswer2) ===
+            normalizeAnswer(currentQuestion.part2.answer);
+
+          // Update validation messages
+          validation1.textContent = isAnswer1Correct
+            ? "✓ Correct!"
+            : "✗ Incorrect. Try again.";
+          validation1.style.color = isAnswer1Correct ? "#28a745" : "#dc3545";
+
+          validation2.textContent = isAnswer2Correct
+            ? "✓ Correct!"
+            : "✗ Incorrect. Try again.";
+          validation2.style.color = isAnswer2Correct ? "#28a745" : "#dc3545";
+
+          // Show overall feedback
+          const allCorrect = isAnswer1Correct && isAnswer2Correct;
+          feedbackArea.textContent = allCorrect
+            ? "Great job! Both derivatives are correct."
+            : "Some answers need correction. Check the hints or solution for help.";
+          feedbackArea.className = allCorrect
+            ? "feedback correct"
+            : "feedback incorrect";
+          feedbackArea.classList.remove("hidden");
+
+          // Generate AI feedback
+          generateAIFeedback(allCorrect, reasoning);
+        }
+
+        // Normalize answers for comparison (remove spaces, handle different formats)
+        function normalizeAnswer(answer) {
+          return answer
+            .replace(/\s+/g, "")
+            .replace(/\\cdot/g, "")
+            .replace(/\*/g, "")
+            .toLowerCase();
+        }
+
+        // Generate AI feedback
+        async function generateAIFeedback(isCorrect, reasoning) {
+          try {
+            const currentQuestion = questionBank[currentQuestionIndex];
+            const questionData = {
+              question: `Find derivatives: ${currentQuestion.part1.function} and ${currentQuestion.part2.function}`,
+              parameters: {
+                type: "derivatives",
+                part1: currentQuestion.part1.function,
+                part2: currentQuestion.part2.function,
+              },
+              correctAnswer: {
+                part1: currentQuestion.part1.answer,
+                part2: currentQuestion.part2.answer,
+              },
+            };
+
+            const userAnswer = {
+              part1: answer1Input.value.trim(),
+              part2: answer2Input.value.trim(),
+            };
+
+            const feedback = await window.openAIService.generateFeedback(
+              questionData,
+              userAnswer,
+              reasoning,
+              isCorrect
+            );
+
+            // Render AI feedback
+            aiFeedbackContent.innerHTML = window.AIRender.renderCard(feedback);
+            aiFeedbackArea.classList.remove("hidden");
+
+            // Re-render MathJax for AI content
+            if (window.MathJax) {
+              MathJax.typesetPromise([aiFeedbackContent]);
+            }
+          } catch (error) {
+            console.error("Error generating AI feedback:", error);
+            aiFeedbackContent.innerHTML =
+              "<p>Unable to generate AI feedback at this time.</p>";
+            aiFeedbackArea.classList.remove("hidden");
+          }
+        }
+
+        // Show solution
+        function showSolution() {
+          const currentQuestion = questionBank[currentQuestionIndex];
+          solutionContent.innerHTML = `
+            <div class="step">
+              <div class="step-title">Part 1: Trigonometric Function</div>
+              <p>Given: \\( ${currentQuestion.part1.function} \\)</p>
+              <p>Solution: \\( ${currentQuestion.part1.answer} \\)</p>
+            </div>
+            <div class="step">
+              <div class="step-title">Part 2: Logarithmic Function</div>
+              <p>Given: \\( ${currentQuestion.part2.function} \\)</p>
+              <p>Solution: \\( ${currentQuestion.part2.answer} \\)</p>
+            </div>
+          `;
+
+          solutionArea.classList.remove("hidden");
+
+          // Re-render MathJax
+          if (window.MathJax) {
+            MathJax.typesetPromise([solutionContent]);
+          }
+        }
+
+        // Show steps
+        function showSteps() {
+          const currentQuestion = questionBank[currentQuestionIndex];
+          stepsContent.innerHTML = `
+            <div class="step">
+              <div class="step-title">Part 1: Trigonometric Function</div>
+              <p>Given: \\( ${currentQuestion.part1.function} \\)</p>
+              <ol>
+                ${currentQuestion.part1.steps
+                  .map((step) => `<li>${step}</li>`)
+                  .join("")}
+              </ol>
+              <p>Final answer: \\( ${currentQuestion.part1.answer} \\)</p>
+            </div>
+            <div class="step">
+              <div class="step-title">Part 2: Logarithmic Function</div>
+              <p>Given: \\( ${currentQuestion.part2.function} \\)</p>
+              <ol>
+                ${currentQuestion.part2.steps
+                  .map((step) => `<li>${step}</li>`)
+                  .join("")}
+              </ol>
+              <p>Final answer: \\( ${currentQuestion.part2.answer} \\)</p>
+            </div>
+          `;
+
+          stepByStepArea.classList.remove("hidden");
+
+          // Re-render MathJax
+          if (window.MathJax) {
+            MathJax.typesetPromise([stepsContent]);
+          }
+        }
+
+        // Clear all inputs and feedback
+        function clearAll() {
+          answer1Input.value = "";
+          answer2Input.value = "";
+          reasoningInput.value = "";
+
+          validation1.textContent = "";
+          validation2.textContent = "";
+
+          feedbackArea.classList.add("hidden");
+          stepByStepArea.classList.add("hidden");
+          solutionArea.classList.add("hidden");
+          aiFeedbackArea.classList.add("hidden");
+          hintArea.classList.add("hidden");
+          examplesArea.classList.add("hidden");
+
+          updatePreview(answer1Input, previewContent1, preview1);
+          updatePreview(answer2Input, previewContent2, preview2);
+          updateMathPreview();
+          updateInputStatus();
+        }
+
+        // Generate a new question
+        function generateNewQuestion() {
+          // Cycle through the question bank
+          currentQuestionIndex =
+            (currentQuestionIndex + 1) % questionBank.length;
+
+          updateQuestionDisplay();
+          clearAll();
+        }
+
+        // Toggle hints visibility
+        function toggleHints() {
+          if (hintArea.classList.contains("hidden")) {
+            hintArea.classList.remove("hidden");
+            examplesArea.classList.add("hidden");
+          } else {
+            hintArea.classList.add("hidden");
+          }
+        }
+
+        // Fill with example answers
+        function fillWithExamples() {
+          const currentQuestion = questionBank[currentQuestionIndex];
+          answer1Input.value = currentQuestion.part1.answer;
+          answer2Input.value = currentQuestion.part2.answer;
+          reasoningInput.value = `For Part 1:
+        Using the chain rule:
+        \\[\\frac{d}{dx}[3\\cos(2x)] = 3 \\cdot (-2\\sin(2x)) = -6\\sin(2x)\\]
+        \\[\\frac{d}{dx}[4\\sin(3x)] = 4 \\cdot (3\\cos(3x)) = 12\\cos(3x)\\]
+        So $f'(x) = -6\\sin(2x) + 12\\cos(3x)$
+        
+        For Part 2:
+        Using the chain rule for logarithms:
+        \\[g'(y) = \\frac{d}{dy}[\\ln(u(y))] = \\frac{u'(y)}{u(y)}\\]
+        Where $u(y) = 2y^2 + 3y + 1$ and $u'(y) = 4y + 3$
+        So $g'(y) = \\frac{4y + 3}{2y^2 + 3y + 1}$`;
+
+          updatePreview(answer1Input, previewContent1, preview1);
+          updatePreview(answer2Input, previewContent2, preview2);
+          updateMathPreview();
+          updateInputStatus();
+        }
+
+        // Initialize the quiz when the page loads
+        initQuiz();
+      });
+    </script>
+  </body>
+</html>

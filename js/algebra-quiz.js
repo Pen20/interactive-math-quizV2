@@ -144,7 +144,7 @@ document.addEventListener("DOMContentLoaded", function () {
     return `
   <div class="ai-card">
     <div class="ai-card-header">
-      <span>🤖 AI Feedback</span>
+      <span> AI Feedback</span>
       <span>${tag}</span>
     </div>
     <div class="ai-section">

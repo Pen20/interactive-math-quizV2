@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Linear Algebra – Practice Hub</title>
+
+    <!-- Shared styles -->
+    <link rel="stylesheet" href="../../css/style.css" />
+    <link rel="stylesheet" href="../../css/quiz-common.css" />
+    <style>
+      .grid-cards {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: repeat(3, 1fr);
+      }
+      @media (max-width: 980px) {
+        .grid-cards {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card-xl {
+        background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        text-align: center;
+      }
+      .card-xl h2 {
+        margin: 0 0 10px;
+        font-size: 30px;
+      }
+      .card-xl p {
+        color: #5b6470;
+        line-height: 1.6;
+        min-height: 70px;
+      }
+      .cta {
+        margin-top: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="quiz-container">
+      <a href="/" class="back-button">← Back to Main Menu</a>
+
+      <h1 class="quiz-title">Linear Algebra</h1>
+      <p class="quiz-subtitle">Practice topic across common exercices.</p>
+
+      <div class="card-grid">
+        <div class="quiz-card">
+          <div class="quiz-icon"></div>
+          <h3>Linear Algebra</h3>
+          <p>Solve linear equations with step-by-step guidance.</p>
+          <a
+            class="button primary"
+            href="/html/linear-algebra/algebra-quiz.html"
+            >Start</a
+          >
+        </div>
+
+        <div class="card-grid">
+          <div class="quiz-card">
+            <div class="quiz-icon"></div>
+            <h3>System of Equations</h3>
+            <p>
+              Find equations with no solutions and understand parallel lines.
+            </p>
+            <a
+              class="button primary"
+              href="/html/linear-algebra/equations-quiz.html"
+              >Start</a
+            >
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="quiz-card">
+            <div class="quiz-icon"></div>
+            <h3>Matrix Determinant</h3>
+            <p>Calculate determinants and find critical values.</p>
+            <a
+              class="button primary"
+              href="/html/linear-algebra/determinant-quiz.html"
+              >Start</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

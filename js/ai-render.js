@@ -1,20 +1,35 @@
 // js/ai-render.js
+// Universal AI feedback renderer + shared LaTeX validator.
+// Works across ALL quiz pages, regardless of how many answers a question has.
+// Produces the "pill + two columns + next steps + chips" card that matches your screenshot.
+
 (function () {
-  // ---------- Shared LaTeX validator ----------
+  /* =========================================================
+   * 1) Robust LaTeX validator shared by every page
+   * ========================================================= */
   const MathUtils = window.MathUtils || {};
-  MathUtils.validateLatexSyntax = function (input) {
+
+  /**
+   * validateLatexSyntax(str)
+   * - Returns { isValid: boolean, errors: string[] }
+   * - Non-intrusive checks (balanced braces / delimiters, basic \frac form)
+   */
+  MathUtils.validateLatexSyntax = function validateLatexSyntax(input) {
     const errors = [];
     const s = String(input ?? "");
 
+    // Balanced braces { }
     const open = (s.match(/(?<!\\){/g) || []).length;
     const close = (s.match(/(?<!\\)}/g) || []).length;
     if (open !== close)
       errors.push(`Unbalanced braces: ${open} “{” vs ${close} “}”.`);
 
+    // $ ... $ pairs (ignore $$...$$ blocks first)
     const noDisplay = s.replace(/\$\$[\s\S]*?\$\$/g, "");
     const singles = (noDisplay.match(/(?<!\\)\$/g) || []).length;
     if (singles % 2) errors.push("Unbalanced $ delimiters.");
 
+    // \[ \] and \( \)
     const lSq = (s.match(/(?<!\\)\\\[/g) || []).length;
     const rSq = (s.match(/(?<!\\)\\\]/g) || []).length;
     if (lSq !== rSq) errors.push("Unbalanced \\[ \\] delimiters.");
@@ -23,6 +38,7 @@
     const rPar = (s.match(/(?<!\\)\\\)/g) || []).length;
     if (lPar !== rPar) errors.push("Unbalanced \\( \\) delimiters.");
 
+    // Basic \frac{num}{den} shape
     const fracAll = s.match(/\\frac/g) || [];
     const fracOk = s.match(/\\frac\{[^{}]+\}\{[^{}]+\}/g) || [];
     if (fracAll.length !== fracOk.length)
@@ -30,82 +46,150 @@
 
     return { isValid: errors.length === 0, errors };
   };
+
   window.MathUtils = MathUtils;
 
-  // ---------- Shared AI feedback renderer ----------
-  function badge(text, kind = "neutral") {
-    const cls =
-      kind === "good"
-        ? "badge-good"
-        : kind === "bad"
-        ? "badge-bad"
-        : kind === "warn"
-        ? "badge-warn"
-        : "badge";
-    return `<span class="${cls}">${text}</span>`;
+  /* =========================================================
+   * 2) Universal AI feedback renderer (screenshot style)
+   * =========================================================
+   *
+   * INPUT OBJECT SHAPE (flexible):
+   * {
+   *   summary: "Short paragraph",
+   *   correctness: "correct" | "incorrect" | "partially-correct",
+   *   strengths: ["...","..."],   // any length (0..n)
+   *   issues:    ["...","..."],
+   *   next_steps:["...","..."],
+   *   key_concepts: ["...","..."],    // will render as chips/badges
+   *   // Optional math highlights. You can pass:
+   *   // - a string:        "x^2 + 1"
+   *   // - an array:        ["x^2 + 1", "\\frac{a}{b}"]
+   *   // - an object map:   { part1: "…", part2: "…" }
+   *   math_highlight: string | string[] | Record<string,string>
+   * }
+   *
+   * RETURNS: HTML string (no side effects)
+   */
+
+  function esc(s) {
+    return (s ?? "").toString();
+  }
+
+  function normalizeCorrectness(v) {
+    const s = String(v || "").toLowerCase();
+    if (s === "correct") return "correct";
+    if (s === "partially-correct" || s === "partial" || s === "partially")
+      return "partially-correct";
+    return "incorrect";
+  }
+
+  function statusPill(cls) {
+    const norm = normalizeCorrectness(cls);
+    const map = {
+      correct: { t: "Correct", c: "aifx-pill aifx-ok" },
+      "partially-correct": { t: "Partially Correct", c: "aifx-pill aifx-warn" },
+      incorrect: { t: "Incorrect", c: "aifx-pill aifx-bad" },
+    };
+    const m = map[norm];
+    return `<span class="${m.c}">${m.t}</span>`;
   }
 
   function list(items) {
-    if (!items || !items.length) return "<em>—</em>";
-    return `<ul class="ai-list">${items
-      .map((i) => `<li>${i}</li>`)
-      .join("")}</ul>`;
+    if (!items || !items.length) return "<p>—</p>";
+    return `<ul>${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`;
   }
 
-  function renderCard(data) {
-    const d =
-      typeof data === "object" && data ? data : { summary: String(data || "") };
-    const tag =
-      d.correctness === "correct"
-        ? badge("Correct", "good")
-        : d.correctness === "partially-correct"
-        ? badge("Partially correct", "warn")
-        : d.correctness === "incorrect"
-        ? badge("Incorrect", "bad")
-        : badge("Feedback");
+  function chips(items) {
+    if (!items || !items.length) return "";
+    return `<div class="aifx-badges">${items
+      .map((k) => `<span class="aifx-badge">${esc(k)}</span>`)
+      .join("")}</div>`;
+  }
 
-    const math = d.math_highlight
-      ? `<div class="ai-section"><div class="ai-math">\\(${String(
-          d.math_highlight
-        ).replace(/^\\\(|\\\)$/g, "")}\\)</div></div>`
-      : "";
+  function renderMathHighlights(high) {
+    if (!high) return "";
+
+    // Allow: string | string[] | object map
+    let blocks = [];
+    if (typeof high === "string") {
+      blocks = [high];
+    } else if (Array.isArray(high)) {
+      blocks = high.slice();
+    } else if (typeof high === "object") {
+      blocks = Object.entries(high).map(
+        ([k, v]) =>
+          `<div class="aifx-math-label">${esc(k)}</div> \\(${esc(v)}\\)`
+      );
+      return `
+        <div class="aifx-math-wrap">
+          ${blocks.map((b) => `<div class="aifx-math">${b}</div>`).join("")}
+        </div>
+      `;
+    }
 
     return `
-      <div class="ai-card">
-        <div class="ai-card-header">
-          <span>🤖 AI Feedback</span>
-          <span>${tag}</span>
+      <div class="aifx-math-wrap">
+        ${blocks
+          .map((b) => `<div class="aifx-math">\\(${esc(b)}\\)</div>`)
+          .join("")}
+      </div>
+    `;
+  }
+
+  /**
+   * renderCard(feedback)
+   * Returns an HTML string for the feedback card.
+   */
+  function renderCard(obj) {
+    const pill = statusPill(obj?.correctness);
+
+    return `
+      <div class="aifx-box">
+        <div class="aifx-head">
+          <div class="aifx-title">AI Feedback</div>
+          ${pill}
         </div>
 
-        <div class="ai-section"><p class="ai-summary">${
-          d.summary || ""
-        }</p></div>
-        ${math}
+        <div class="aifx-body">
+          ${obj?.summary ? `<p>${esc(obj.summary)}</p>` : ""}
 
-        <div class="ai-grid">
-          <div class="ai-col">
-            <h4>Strengths</h4>
-            ${list(d.strengths)}
+          ${renderMathHighlights(obj?.math_highlight)}
+
+          <div class="aifx-split">
+            <div class="aifx-col">
+              <h5>Strengths</h5>
+              ${list(obj?.strengths)}
+            </div>
+            <div class="aifx-col">
+              <h5>Issues</h5>
+              ${list(obj?.issues)}
+            </div>
           </div>
-          <div class="ai-col">
-            <h4>Issues</h4>
-            ${list(d.issues)}
+
+          <div class="aifx-col" style="margin-top:12px;">
+            <h5>Next Steps</h5>
+            ${list(obj?.next_steps)}
           </div>
-        </div>
 
-        <div class="ai-section">
-          <h4>Next Steps</h4>
-          ${list(d.next_steps)}
-        </div>
-
-        <div class="ai-section ai-tags">
-          ${(d.key_concepts || [])
-            .map((k) => `<span class="chip">${k}</span>`)
-            .join("")}
+          ${chips(obj?.key_concepts)}
         </div>
       </div>
     `;
   }
 
-  window.AIRender = { renderCard };
+  /**
+   * Convenience builder for quick usage:
+   * AIRender.build({ summary, correctness, strengths, issues, next_steps, key_concepts, math_highlight })
+   * -> returns HTML (same as renderCard)
+   */
+  function build(parts) {
+    return renderCard(parts || {});
+  }
+
+  // Expose API
+  window.AIRender = {
+    renderCard,
+    build,
+    normalizeCorrectness,
+  };
 })();

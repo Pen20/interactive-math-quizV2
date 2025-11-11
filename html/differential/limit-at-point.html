@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Limit at a Point – Interactive Math Quiz</title>
+
+    <!-- Shared styles -->
+    <link rel="stylesheet" href="../../css/style.css" />
+    <link rel="stylesheet" href="../../css/quiz-common.css" />
+
+    <!-- MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [
+            ["$", "$"],
+            ["\\(", "\\)"],
+          ],
+          displayMath: [
+            ["\\[", "\\]"],
+            ["$$", "$$"],
+          ],
+        },
+        options: {
+          skipHtmlTags: [
+            "script",
+            "noscript",
+            "style",
+            "textarea",
+            "pre",
+            "code",
+          ],
+        },
+      };
+    </script>
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
+    ></script>
+
+    <style>
+      .narrow {
+        max-width: 520px;
+        margin-inline: auto;
+      }
+      .function-display {
+        font-size: 20px;
+      }
+      .ai-card {
+        background: #fff;
+        border: 1px solid #e6e6e6;
+        border-radius: 10px;
+        padding: 16px;
+      }
+      .grid-1 {
+        display: grid;
+        gap: 16px;
+      }
+      .help-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-bottom: 18px;
+      }
+      .notation-help .info-table td code {
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="quiz-container">
+      <a class="back-button" href="/html/differential/"
+        >← Back to Differential Calculus</a
+      >
+
+      <h1 class="quiz-title">Limit of a Function at a Given Point</h1>
+      <p class="quiz-subtitle">Evaluate the limit after simplifying.</p>
+
+      <div class="question-text">
+        <!-- Top actions -->
+        <div class="help-actions">
+          <button class="button secondary" id="newQuestionBtn">
+            Generate New Question
+          </button>
+          <button class="button secondary" id="hintBtn">
+            Need Help? Show Hints
+          </button>
+          <button class="button secondary" id="notationBtn">
+            LaTeX Notation Help
+          </button>
+        </div>
+
+        <div class="question-display">
+          <h4>Function</h4>
+          <div class="function-display" id="functionDisplay">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <div class="grid-1 narrow">
+          <div class="card">
+            <label for="ans1" class="label-strong">Find the limit value</label>
+            <input
+              id="ans1"
+              class="text"
+              type="text"
+              placeholder="e.g. 11 or -3/2"
+            />
+            <div id="feedback1" class="feedback hidden"></div>
+          </div>
+        </div>
+
+        <!-- Reasoning + live preview -->
+        <div class="reasoning-section">
+          <h3>Explain Your Reasoning</h3>
+          <p>
+            Use <code>$...$</code> or <code>$$...$$</code> for math. Your text
+            renders below.
+          </p>
+          <textarea
+            id="reasoningInput"
+            class="reasoning-input"
+            rows="6"
+            placeholder="Direct substitution gives $0/0$. Factor and cancel $(x-a)$, then substitute $x=a$."
+          ></textarea>
+
+          <div class="latex-validation hidden" id="latex-validation"></div>
+
+          <div class="math-preview">
+            <div class="math-preview-label">Live Preview</div>
+            <div id="reasoningPreview">Your reasoning will appear here…</div>
+          </div>
+        </div>
+
+        <!-- Status row -->
+        <div class="input-status">
+          <div class="status-item">
+            <span id="ans1-icon" class="status-cross">✗</span
+            ><span>Answer entered</span>
+          </div>
+          <div class="status-item">
+            <span id="reasoning-icon" class="status-cross">✗</span
+            ><span>Reasoning provided</span>
+          </div>
+          <div class="status-item">
+            <span id="latex-icon" class="status-check">✓</span
+            ><span>Valid LaTeX</span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="action-buttons">
+          <button id="checkBtn" class="button primary" disabled>
+            Check Solution
+          </button>
+          <button id="showSolutionBtn" class="button secondary">
+            Show Solution
+          </button>
+          <button id="showStepsBtn" class="button secondary">Show Steps</button>
+          <button id="clearBtn" class="button success">Clear All</button>
+        </div>
+
+        <!-- Hints -->
+        <div id="hintContainer" class="custom-hint hidden">
+          <h4>Hints</h4>
+          <ul>
+            <li>Substituting $x=a$ yields $0/0$ (indeterminate).</li>
+            <li>Factor the common $(x-a)$ and cancel (for $x\ne a$).</li>
+            <li>Evaluate the remaining linear function at $x=a$.</li>
+          </ul>
+        </div>
+
+        <!-- Notation Help -->
+        <div id="notationContainer" class="custom-hint notation-help hidden">
+          <h4>LaTeX Notation Help</h4>
+          <table class="info-table">
+            <thead>
+              <tr>
+                <th>What you want</th>
+                <th>Type this</th>
+                <th>Renders as</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Infinity</td>
+                <td><code>\infty</code></td>
+                <td>\(\infty\)</td>
+              </tr>
+              <tr>
+                <td>Real numbers</td>
+                <td><code>\mathbb{R}</code></td>
+                <td>\(\mathbb{R}\)</td>
+              </tr>
+              <tr>
+                <td>Fraction</td>
+                <td><code>\frac{a}{b}</code></td>
+                <td>\(\frac{a}{b}\)</td>
+              </tr>
+              <tr>
+                <td>Absolute value</td>
+                <td><code>|x|</code> or <code>\lvert x\rvert</code></td>
+                <td>\(|x|\)</td>
+              </tr>
+              <tr>
+                <td>Limit</td>
+                <td><code>\lim_{x\to a} f(x)</code></td>
+                <td>\(\lim_{x\to a} f(x)\)</td>
+              </tr>
+              <tr>
+                <td>Therefore / implies</td>
+                <td><code>\therefore</code>, <code>\Rightarrow</code></td>
+                <td>\(\therefore,\ \Rightarrow\)</td>
+              </tr>
+              <tr>
+                <td>Intervals</td>
+                <td>
+                  <code>(a,b)</code>, <code>[a,b]</code>,
+                  <code>[a,\infty)</code>
+                </td>
+                <td>\((a,b)\), \([a,b]\), \([a,\infty)\)</td>
+              </tr>
+              <tr>
+                <td>≥, ≤</td>
+                <td><code>\ge</code>, <code>\le</code></td>
+                <td>\(\ge,\ \le\)</td>
+              </tr>
+              <tr>
+                <td>Inline vs Display</td>
+                <td>
+                  <code>$...$</code> (inline), <code>$$...$$</code> (centered)
+                </td>
+                <td>-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- AI feedback -->
+        <div id="aiFeedbackEnhanced" class="ai-feedback-enhanced hidden">
+          <h4>AI Feedback</h4>
+          <div id="aiFeedbackContent" class="ai-card"></div>
+        </div>
+
+        <!-- Step-by-step & Solution -->
+        <div id="stepByStep" class="step-by-step hidden">
+          <h3>Step-by-Step Solution</h3>
+          <div id="stepsContent"></div>
+        </div>
+
+        <div id="solution" class="solution hidden">
+          <h3>Complete Solution</h3>
+          <div id="solutionContent"></div>
+        </div>
+
+        <!-- Banner -->
+        <div id="scoreBanner" class="feedback hidden"></div>
+      </div>
+    </div>
+
+    <!-- Shared JS -->
+    <script src="../../js/app.js"></script>
+    <script src="../../js/ai-render.js"></script>
+    <script src="../../js/openai-service.js"></script>
+
+    <!-- Page JS (cache-busted) -->
+    <script src="../../js/limit-at-point.js?v=3"></script>
+  </body>
+</html>

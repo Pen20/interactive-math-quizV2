@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Continuity of Piecewise Functions – Interactive Math Quiz</title>
+
+    <!-- Shared styles -->
+    <link rel="stylesheet" href="../../css/style.css" />
+    <link rel="stylesheet" href="../../css/quiz-common.css" />
+
+    <!-- MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [
+            ["$", "$"],
+            ["\\(", "\\)"],
+          ],
+          displayMath: [
+            ["\\[", "\\]"],
+            ["$$", "$$"],
+          ],
+        },
+        options: {
+          skipHtmlTags: [
+            "script",
+            "noscript",
+            "style",
+            "textarea",
+            "pre",
+            "code",
+          ],
+        },
+      };
+    </script>
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
+    ></script>
+
+    <style>
+      /* Tiny page-specific touches that piggyback on quiz-common.css */
+      .piecewise-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .piecewise-card {
+        background: #f8f9fa;
+        border-left: 4px solid #3498db;
+        padding: 16px;
+        border-radius: 10px;
+      }
+      .select {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #dce6f1;
+        border-radius: 8px;
+        background: #fff;
+      }
+      .select:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+      }
+      .ai-card {
+        background: #fff;
+        border: 1px solid #e6e6e6;
+        border-radius: 10px;
+        padding: 16px;
+      }
+      @media (max-width: 768px) {
+        .piecewise-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      /* Top helpers row like domain-range */
+      .helpers-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 10px 0 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="quiz-container">
+      <a class="back-button" href="/html/differential/"
+        >← Back to Differential Calculus</a
+      >
+
+      <h1 class="quiz-title">Continuity of Piecewise Functions</h1>
+      <p class="quiz-subtitle">
+        Determine whether the function is continuous at \(x=4\) and \(x=6\).
+      </p>
+
+      <div class="question-text">
+        <!-- helpers aligned with domain-range layout -->
+        <div class="helpers-row">
+          <button id="newQuestionBtn" class="button secondary">
+            Generate New Question
+          </button>
+          <button id="hintBtn" class="button secondary">
+            Need Help? Show Hints
+          </button>
+        </div>
+
+        <div class="question-display">
+          <h4>Function</h4>
+          <div class="function-display" id="functionDisplay">
+            <!-- rendered by JS -->
+          </div>
+        </div>
+
+        <div class="piecewise-grid">
+          <div class="piecewise-card">
+            <label for="ans1" class="label-strong"
+              >At \(x=4\), the function:</label
+            >
+            <select id="ans1" class="select">
+              <option value="">— Select an option —</option>
+              <option value="is continuous">is continuous</option>
+              <option value="is not continuous">is not continuous</option>
+            </select>
+            <div id="feedback1" class="feedback hidden"></div>
+          </div>
+
+          <div class="piecewise-card">
+            <label for="ans2" class="label-strong"
+              >At \(x=6\), the function:</label
+            >
+            <select id="ans2" class="select">
+              <option value="">— Select an option —</option>
+              <option value="is continuous">is continuous</option>
+              <option value="is not continuous">is not continuous</option>
+            </select>
+            <div id="feedback2" class="feedback hidden"></div>
+          </div>
+        </div>
+
+        <!-- Reasoning + preview -->
+        <div class="reasoning-section">
+          <h3>Explain Your Reasoning</h3>
+          <p>
+            Use <code>$...$</code> or <code>$$...$$</code> for math. Your text
+            will render below.
+          </p>
+          <textarea
+            id="reasoningInput"
+            class="reasoning-input"
+            rows="6"
+            placeholder="Example:
+At \(x=4\) we use the left piece only, which is linear, hence continuous.
+At \(x=6\), compare one-sided limits:
+$$\lim_{x\to 6^-}f(x),\qquad \lim_{x\to 6^+}f(x).$$
+If they differ or mismatch \(f(6)\), it is not continuous."
+          ></textarea>
+
+          <div class="latex-validation hidden" id="latex-validation"></div>
+
+          <div class="math-preview">
+            <div class="math-preview-label">Live Preview</div>
+            <div id="reasoningPreview">Your reasoning will appear here…</div>
+          </div>
+        </div>
+
+        <!-- Status row -->
+        <div class="input-status">
+          <div class="status-item">
+            <span id="ans1-icon" class="status-cross">✗</span
+            ><span>Answer for \(x=4\)</span>
+          </div>
+          <div class="status-item">
+            <span id="ans2-icon" class="status-cross">✗</span
+            ><span>Answer for \(x=6\)</span>
+          </div>
+          <div class="status-item">
+            <span id="reasoning-icon" class="status-cross">✗</span
+            ><span>Reasoning provided</span>
+          </div>
+          <div class="status-item">
+            <span id="latex-icon" class="status-cross">✗</span
+            ><span>Valid LaTeX</span>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="action-buttons">
+          <button id="checkBtn" class="button primary" disabled>
+            Check Solution
+          </button>
+          <button id="showSolutionBtn" class="button secondary">
+            Show Solution
+          </button>
+          <button id="showStepsBtn" class="button secondary">Show Steps</button>
+          <button id="clearBtn" class="button success">Clear All</button>
+        </div>
+
+        <!-- Hints -->
+        <div id="hintContainer" class="custom-hint hidden">
+          <h4>Helpful Hints</h4>
+          <ol>
+            <li>
+              \(f\) is continuous at \(x=a\) if (i) \(f(a)\) is defined, (ii)
+              \(\lim_{x\to a}f(x)\) exists, and (iii) \(\lim_{x\to
+              a}f(x)=f(a)\).
+            </li>
+            <li>
+              At a switch point (here \(x=6\)), compare left and right limits.
+            </li>
+            <li>
+              Polynomials and linear functions are continuous on \(\mathbb{R}\).
+            </li>
+          </ol>
+        </div>
+
+        <!-- AI feedback -->
+        <div id="aiFeedbackEnhanced" class="ai-feedback-enhanced hidden">
+          <h4>AI Feedback</h4>
+          <div id="aiFeedbackContent" class="ai-card"></div>
+        </div>
+
+        <!-- Step-by-step & Solution -->
+        <div id="steps" class="step-by-step hidden">
+          <h3>Step-by-Step Solution</h3>
+          <div id="stepsContent"></div>
+        </div>
+
+        <div id="solution" class="solution hidden">
+          <h3>Complete Solution</h3>
+          <div id="solutionContent"></div>
+        </div>
+
+        <!-- Score banner -->
+        <div id="scoreBanner" class="feedback hidden"></div>
+      </div>
+    </div>
+
+    <!-- Shared JS -->
+    <script src="../../js/app.js"></script>
+    <script src="../../js/ai-render.js"></script>
+    <script src="../../js/openai-service.js"></script>
+
+    <!-- Page JS -->
+    <script src="../../js/piecewise-continuity.js"></script>
+  </body>
+</html>

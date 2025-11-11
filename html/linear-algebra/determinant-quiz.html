@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Matrix Determinant Quiz - Interactive Math Quiz</title>
-    <link rel="stylesheet" href="../css/quiz-common.css" />
+    <link rel="stylesheet" href="../../css/quiz-common.css" />
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script
       id="MathJax-script"
@@ -14,7 +14,9 @@
   </head>
   <body>
     <div class="quiz-container">
-      <a href="/" class="back-button">← Back to Main Menu</a>
+      <a href="/html/linear-algebra/" class="back-button"
+        >← Back to Linear Algebra</a
+      >
 
       <h1 class="quiz-title">Matrix Determinant Quiz</h1>
 
@@ -135,7 +137,7 @@
         </div>
 
         <div class="ai-feedback-enhanced hidden" id="ai-feedback-enhanced">
-          <h4>🤖 AI Feedback</h4>
+          <h4>AI Feedback</h4>
           <div
             class="ai-feedback-content-enhanced"
             id="ai-feedback-content-enhanced"
@@ -201,9 +203,9 @@
     </div>
 
     <!-- Order matters: app (model selection only) -> openai service -> shared renderer -> this quiz -->
-    <script src="../js/app.js"></script>
-    <script src="../js/openai-service.js"></script>
-    <script src="../js/ai-render.js"></script>
-    <script src="../js/determinant-quiz.js"></script>
+    <script src="../../js/app.js"></script>
+    <script src="../../js/openai-service.js"></script>
+    <script src="../../js/ai-render.js"></script>
+    <script src="../../js/determinant-quiz.js"></script>
   </body>
 </html>
