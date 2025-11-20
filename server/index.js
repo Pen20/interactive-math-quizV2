@@ -10,6 +10,7 @@ import compression from "compression";
 import rateLimit from "express-rate-limit";
 import openaiRouter from "./openaiRouter.js";
 import authRouter, { verifyToken } from "./authRouter.js";
+import submissionsRouter from "./submissionsRouter.js";
 
 dotenv.config();
 
@@ -59,6 +60,8 @@ const openaiLimiter = rateLimit({
 app.use("/api/openai", openaiLimiter, openaiRouter);
 // Auth endpoints (signup/login/me)
 app.use("/api/auth", authRouter);
+// Submissions (save quiz attempts to Supabase)
+app.use("/api/submissions", submissionsRouter);
 
 /* ---------- pages ---------- */
 // Home page

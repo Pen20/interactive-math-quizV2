@@ -1,0 +1,8 @@
+nohup: ignoring input
+
+> server@1.0.0 start
+> node index.js
+
+[dotenv@17.2.3] injecting env (3) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+Server running on http://localhost:3080

@@ -201,6 +201,8 @@ document.addEventListener("DOMContentLoaded", function () {
       correctAnswer: solution.toString(),
       parameters: { a, b, c },
       topic: "algebra",
+      // track when the question was presented to the user
+      openedAt: Date.now(),
     };
 
     updateQuestionDisplay();
@@ -452,6 +454,32 @@ document.addEventListener("DOMContentLoaded", function () {
       elements.aiFeedbackContentEnhanced.innerHTML = `
     <p style="color:#dc3545;"><strong>Error:</strong> ${error.message}</p>
   `;
+    }
+
+    // Prepare submission payload and send to server (fire-and-forget)
+    try {
+      const submittedAt = Date.now();
+      const payload = {
+        question: currentQuestion.question,
+        course: currentQuestion.topic || currentQuestion.topic || 'unknown',
+        questionId: currentQuestion.parameters ? JSON.stringify(currentQuestion.parameters) : null,
+        timeOpen: currentQuestion.openedAt || null,
+        timeSubmitted: submittedAt,
+        userAnswer: elements.userAnswerInput.value.trim(),
+        reasoningSteps: elements.reasoningInput.value.trim(),
+        aiFeedback: parsedFeedback,
+        correctness: isCorrect ? 'correct' : 'incorrect',
+        metadata: { source: 'algebra-quiz' }
+      };
+
+      if (window.SubmissionClient?.save) {
+        window.SubmissionClient.save(payload).then((r) => {
+          // optional: log response for debugging
+          if (r?.error) console.warn('Submission save error:', r);
+        }).catch((e) => console.warn('Submission save failed', e));
+      }
+    } catch (e) {
+      console.warn('Failed to prepare submission:', e);
     }
 
     elements.feedbackDiv.classList.remove("hidden");
