@@ -12,5 +12,12 @@
     "name": "Armstrong",
     "password": "$2a$10$BLTrFTpM6fLUADKGydfIWuBeQ6T4uLrPNVSgDboyTxU0lcVRyQiNS",
     "createdAt": "2025-11-24T17:42:30.428Z"
+  },
+  {
+    "id": "7afb1e08-0847-4150-8c71-4363c43369a8",
+    "email": "wastalasdassise@gmail.com",
+    "name": "",
+    "password": "$2a$10$IntXA.ph1HohfUwyURg8TuxxA6Icl6BrZhEJneMOMrKUriMaN6lOi",
+    "createdAt": "2025-11-25T06:30:32.323Z"
   }
 ]

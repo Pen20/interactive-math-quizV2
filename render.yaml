@@ -22,3 +22,12 @@ services:
       # Add this secret in the Render dashboard (do not commit a value)
       - key: OPENAI_API_KEY
         sync: false
+      # Supabase
+      - key: SUPABASE_URL
+        value: https://pnrohjdqnefczscdssud.supabase.co
+      - key: SUPABASE_KEY
+        sync: false
+
+      # JWT secret (add value in dashboard)
+      - key: JWT_SECRET
+        sync: false
