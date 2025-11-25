@@ -3,17 +3,8 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =========================
    * DOM ELEMENTS
    * ========================= */
-  const answer1Input = document.getElementById("answer1");
-  const answer2Input = document.getElementById("answer2");
-
-  // Live preview blocks for derivatives
-  const preview1 = document.getElementById("preview-answer1");
-  const preview2 = document.getElementById("preview-answer2");
-  const previewContent1 = preview1.querySelector(".derivative-preview-content");
-  const previewContent2 = preview2.querySelector(".derivative-preview-content");
-
-  const validation1 = document.getElementById("validation-answer1");
-  const validation2 = document.getElementById("validation-answer2");
+  const userAnswerInput = document.getElementById("user-answer");
+  const validationAnswer = document.getElementById("validation-answer");
 
   const reasoningInput = document.getElementById("reasoning-input");
   const mathPreviewContent = document.getElementById("math-preview-content");
@@ -25,15 +16,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const clearAllBtn = document.getElementById("clear-all");
   const newQuestionBtn = document.getElementById("new-question");
   const showHintsBtn = document.getElementById("show-hints");
-  const fillExamplesBtn = document.getElementById("fill-examples");
 
-  const answer1Status = document.getElementById("answer1-status-icon");
-  const answer2Status = document.getElementById("answer2-status-icon");
+  const answerStatus = document.getElementById("answer-status-icon");
   const reasoningStatus = document.getElementById("reasoning-status-icon");
   const latexStatus = document.getElementById("latex-status-icon");
 
-  const function1Display = document.getElementById("function1-display");
-  const function2Display = document.getElementById("function2-display");
+  const matrixDisplay = document.getElementById("matrix-display");
+  const questionText = document.getElementById("question-text");
 
   const feedbackArea = document.getElementById("feedback");
   const stepByStepArea = document.getElementById("step-by-step");
@@ -53,27 +42,17 @@ document.addEventListener("DOMContentLoaded", () => {
    * DATA
    * ========================= */
   let currentQuestion = {
-    part1: {
-      function: "f(x) = 3\\cos(2x) + 4\\sin(3x)",
-      answer: "-6\\sin(2x) + 12\\cos(3x)",
-      steps: [
-        "Apply the chain rule to each term separately",
-        "For 3\\cos(2x): derivative = 3 \\cdot (-2\\sin(2x)) = -6\\sin(2x)",
-        "For 4\\sin(3x): derivative = 4 \\cdot (3\\cos(3x)) = 12\\cos(3x)",
-        "Combine the results: f'(x) = -6\\sin(2x) + 12\\cos(3x)",
-      ],
-    },
-    part2: {
-      function: "g(y) = \\ln(2y^2 + 3y + 1)",
-      answer: "\\frac{4y + 3}{2y^2 + 3y + 1}",
-      steps: [
-        "Use the chain rule for logarithms: \\frac{d}{dy}[\\ln(u(y))] = \\frac{u'(y)}{u(y)}",
-        "Let u(y) = 2y^2 + 3y + 1",
-        "Find u'(y) = 4y + 3",
-        "Apply the formula: g'(y) = \\frac{4y + 3}{2y^2 + 3y + 1}",
-      ],
-    },
+    matrix: [[2, 4, 3], [-3, 0, -5], ["k", 4, 3]],
+    answer: "k < 2 or k > 2",
+    excludedValues: [2],
+    steps: [
+      "Calculate the determinant using cofactor expansion",
+      "Set determinant equal to zero and solve for k",
+      "The answer is all k except the value(s) found in step 2",
+    ],
   };
+  let questionVariantIndex = 0;
+  let questionOpenedAt = Date.now();
 
   /* =========================
    * INIT
@@ -83,32 +62,22 @@ document.addEventListener("DOMContentLoaded", () => {
   function initQuiz() {
     updateQuestionDisplay();
     setupEventListeners();
-    updatePreview(answer1Input, previewContent1, preview1);
-    updatePreview(answer2Input, previewContent2, preview2);
     updateMathPreview();
     updateInputStatus();
   }
 
   function updateQuestionDisplay() {
-    function1Display.innerHTML = `\\( ${currentQuestion.part1.function} \\)`;
-    function2Display.innerHTML = `\\( ${currentQuestion.part2.function} \\)`;
+    const m = currentQuestion.matrix;
+    matrixDisplay.innerHTML = `\\[ \\begin{bmatrix} ${m[0].join(" & ")} \\\\ ${m[1].join(" & ")} \\\\ ${m[2].join(" & ")} \\end{bmatrix} \\]`;
     if (window.MathJax)
-      MathJax.typesetPromise([function1Display, function2Display]);
+      MathJax.typesetPromise([matrixDisplay, questionText]);
   }
 
   /* =========================
    * EVENT LISTENERS
    * ========================= */
   function setupEventListeners() {
-    answer1Input.addEventListener("input", () => {
-      updatePreview(answer1Input, previewContent1, preview1);
-      updateInputStatus();
-    });
-
-    answer2Input.addEventListener("input", () => {
-      updatePreview(answer2Input, previewContent2, preview2);
-      updateInputStatus();
-    });
+    userAnswerInput.addEventListener("input", updateInputStatus);
 
     reasoningInput.addEventListener("input", () => {
       updateMathPreview();
@@ -121,56 +90,9 @@ document.addEventListener("DOMContentLoaded", () => {
     clearAllBtn.addEventListener("click", clearAll);
     newQuestionBtn.addEventListener("click", generateNewQuestion);
     showHintsBtn.addEventListener("click", toggleHints);
-    if (fillExamplesBtn)
-      fillExamplesBtn.addEventListener("click", fillWithExamples);
   }
 
-  /* =========================
-   * LIVE PREVIEW FOR ANSWERS
-   * ========================= */
-  function updatePreview(inputEl, previewContentEl, previewContainerEl) {
-    const value = (inputEl.value || "").trim();
 
-    if (value === "") {
-      previewContentEl.innerHTML =
-        '<span class="derivative-preview-placeholder">Your derivative will appear here as you type...</span>';
-      previewContainerEl.classList.remove("preview-valid", "preview-invalid");
-      return;
-    }
-
-    try {
-      let latex = value;
-      const hasDelims =
-        (latex.startsWith("\\(") && latex.endsWith("\\)")) ||
-        (latex.startsWith("\\[") && latex.endsWith("\\]")) ||
-        (latex.startsWith("$") && latex.endsWith("$"));
-
-      if (!hasDelims) latex = `\\( ${latex} \\)`;
-
-      previewContentEl.innerHTML = latex;
-      if (window.MathJax) {
-        MathJax.typesetPromise([previewContentEl])
-          .then(() => {
-            previewContainerEl.classList.add("preview-valid");
-            previewContainerEl.classList.remove("preview-invalid");
-          })
-          .catch(() => {
-            previewContentEl.innerHTML =
-              '<span style="color:#dc3545;">Invalid LaTeX syntax</span>';
-            previewContainerEl.classList.remove("preview-valid");
-            previewContainerEl.classList.add("preview-invalid");
-          });
-      } else {
-        previewContainerEl.classList.add("preview-valid");
-        previewContainerEl.classList.remove("preview-invalid");
-      }
-    } catch (e) {
-      previewContentEl.innerHTML =
-        '<span style="color:#dc3545;">Error rendering preview</span>';
-      previewContainerEl.classList.remove("preview-valid");
-      previewContainerEl.classList.add("preview-invalid");
-    }
-  }
 
   /* =========================
    * REASONING PREVIEW + VALIDATION
@@ -235,19 +157,16 @@ document.addEventListener("DOMContentLoaded", () => {
    * STATUS + ENABLE BUTTON
    * ========================= */
   function updateInputStatus() {
-    const a1Provided = (answer1Input.value || "").trim() !== "";
-    const a2Provided = (answer2Input.value || "").trim() !== "";
+    const ansProvided = (userAnswerInput.value || "").trim() !== "";
     const reasonProvided = (reasoningInput.value || "").trim() !== "";
 
-    updateStatusIcon(answer1Status, a1Provided);
-    updateStatusIcon(answer2Status, a2Provided);
+    updateStatusIcon(answerStatus, ansProvided);
     updateStatusIcon(reasoningStatus, reasonProvided);
 
-    // Button enabled only when all three provided and LaTeX valid
+    // Button enabled only when both provided and LaTeX valid
     const latexOk = latexStatus.classList.contains("status-check");
     checkAnswerBtn.disabled = !(
-      a1Provided &&
-      a2Provided &&
+      ansProvided &&
       reasonProvided &&
       latexOk
     );
@@ -281,39 +200,41 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function checkAnswers() {
-    const userAnswer1 = (answer1Input.value || "").trim();
-    const userAnswer2 = (answer2Input.value || "").trim();
+    const userAnswer = (userAnswerInput.value || "").trim();
     const reasoning = (reasoningInput.value || "").trim();
 
-    const isAnswer1Correct =
-      normalizeAnswer(userAnswer1) ===
-      normalizeAnswer(currentQuestion.part1.answer);
-    const isAnswer2Correct =
-      normalizeAnswer(userAnswer2) ===
-      normalizeAnswer(currentQuestion.part2.answer);
+    const isCorrect = normalizeAnswer(userAnswer) === normalizeAnswer(currentQuestion.answer);
 
-    validation1.textContent = isAnswer1Correct
+    validationAnswer.textContent = isCorrect
       ? "✓ Correct!"
       : "✗ Incorrect. Try again.";
-    validation1.style.color = isAnswer1Correct ? "#28a745" : "#dc3545";
+    validationAnswer.style.color = isCorrect ? "#28a745" : "#dc3545";
 
-    validation2.textContent = isAnswer2Correct
-      ? "✓ Correct!"
-      : "✗ Incorrect. Try again.";
-    validation2.style.color = isAnswer2Correct ? "#28a745" : "#dc3545";
-
-    const allCorrect = isAnswer1Correct && isAnswer2Correct;
-    feedbackArea.textContent = allCorrect
-      ? "Great job! Both derivatives are correct."
-      : "Some answers need correction. Check the hints or solution for help.";
-    feedbackArea.className = allCorrect
+    feedbackArea.textContent = isCorrect
+      ? "Great job! Your answer is correct."
+      : "Not quite right. Check the hints or solution for help.";
+    feedbackArea.className = isCorrect
       ? "feedback correct"
       : "feedback incorrect";
     feedbackArea.classList.remove("hidden");
 
-    generateAIFeedback(allCorrect, reasoning, {
-      part1: userAnswer1,
-      part2: userAnswer2,
+    generateAIFeedback(isCorrect, reasoning, userAnswer).then((aiFeedback) => {
+      saveQuizSubmission({
+        question: "Find values of k for which the determinant is non-zero",
+        course: "linear-algebra",
+        questionId: `determinant-${questionVariantIndex}`,
+        timeOpen: questionOpenedAt,
+        timeSubmitted: Date.now(),
+        userAnswer: userAnswer || "(blank)",
+        reasoningSteps: reasoning,
+        aiFeedback,
+        correctness: isCorrect ? "correct" : "incorrect",
+        metadata: {
+          questionIndex: questionVariantIndex,
+          matrix: currentQuestion.matrix,
+          excludedValues: currentQuestion.excludedValues,
+        },
+      });
     });
   }
 
@@ -322,19 +243,19 @@ document.addEventListener("DOMContentLoaded", () => {
    * ========================= */
   async function generateAIFeedback(isCorrect, reasoning, userAnswer) {
     aiFeedbackArea.classList.remove("hidden");
+    let capturedFeedback = null;
 
     try {
+      const m = currentQuestion.matrix;
+      const matrixStr = `\\begin{bmatrix} ${m[0].join(" & ")} \\\\ ${m[1].join(" & ")} \\\\ ${m[2].join(" & ")} \\end{bmatrix}`;
+      
       const questionData = {
-        question: `Find derivatives: ${currentQuestion.part1.function} and ${currentQuestion.part2.function}`,
+        question: `Find values of k for which the determinant of ${matrixStr} is non-zero`,
         parameters: {
-          type: "derivatives",
-          part1: currentQuestion.part1.function,
-          part2: currentQuestion.part2.function,
+          type: "determinant",
+          matrix: currentQuestion.matrix,
         },
-        correctAnswer: {
-          part1: currentQuestion.part1.answer,
-          part2: currentQuestion.part2.answer,
-        },
+        correctAnswer: currentQuestion.answer,
       };
 
       let feedbackObj = null;
@@ -358,27 +279,40 @@ document.addEventListener("DOMContentLoaded", () => {
         typeof window.AIRender.renderCard === "function"
       ) {
         aiFeedbackContent.innerHTML = window.AIRender.renderCard(feedbackObj);
+        capturedFeedback = feedbackObj;
       } else {
         // Build a minimal feedback object if the service isn't available
         const fallback =
           feedbackObj || buildLocalFeedback(isCorrect, reasoning);
         aiFeedbackContent.innerHTML = renderAICardLikeScreenshot(fallback);
+        capturedFeedback = fallback;
       }
 
       if (window.MathJax) MathJax.typesetPromise([aiFeedbackContent]);
     } catch (err) {
       console.error("Error generating AI feedback:", err);
-      aiFeedbackContent.innerHTML = renderAICardLikeScreenshot(
-        buildLocalFeedback(isCorrect, reasoning, true)
-      );
+      const errorFeedback = buildLocalFeedback(isCorrect, reasoning, true);
+      aiFeedbackContent.innerHTML = renderAICardLikeScreenshot(errorFeedback);
+      capturedFeedback = errorFeedback;
     }
+    return capturedFeedback;
+  }
+
+  function saveQuizSubmission(payload) {
+    if (!window.SubmissionClient?.save) return;
+    window.SubmissionClient
+      .save(payload)
+      .then((res) => {
+        if (res?.error) console.warn("Submission save error:", res.error);
+      })
+      .catch((err) => console.warn("Submission save failed", err));
   }
 
   function buildLocalFeedback(isCorrect, reasoning, errored = false) {
     const correctness = isCorrect ? "correct" : "incorrect";
     const baseSummary = isCorrect
-      ? "Nice work — your differentiation is correct. Make sure you present results in clean mathematical form."
-      : "There are mistakes in your derivatives. Review the chain rule and apply coefficients carefully.";
+      ? "Correct! You properly found when the determinant is non-zero."
+      : "Not quite. Make sure to calculate the determinant, set it to zero, and exclude those k values.";
 
     const summary = errored
       ? "AI service unavailable right now. Here's quick feedback based on your inputs."
@@ -388,24 +322,24 @@ document.addEventListener("DOMContentLoaded", () => {
       summary,
       correctness,
       strengths: isCorrect
-        ? ["Applied chain rule correctly", "Clean term-by-term differentiation"]
+        ? ["Correctly computed determinant", "Properly identified excluded values"]
         : [],
       issues: isCorrect
         ? []
         : [
-            "Coefficient/chain factor missing",
-            "Algebraic simplification needed",
+            "Determinant calculation may be incorrect",
+            "Check solution to det = 0",
           ],
       next_steps: isCorrect
         ? [
-            "Double-check formatting (LaTeX)",
-            "Practice mixed trig/log derivatives",
+            "Practice with larger matrices",
+            "Review matrix properties",
           ]
         : [
-            "Re-derive each term with chain rule",
-            "Verify coefficients and signs",
+            "Review cofactor expansion method",
+            "Double-check your algebra",
           ],
-      tags: ["Differentiation", "Chain rule", "Trig & log"],
+      tags: ["Determinants", "Linear Algebra", "Matrix Properties"],
     };
   }
 
@@ -468,16 +402,14 @@ document.addEventListener("DOMContentLoaded", () => {
    * SOLUTION / STEPS
    * ========================= */
   function showSolution() {
+    const m = currentQuestion.matrix;
+    const matrixStr = `\\begin{bmatrix} ${m[0].join(" & ")} \\\\ ${m[1].join(" & ")} \\\\ ${m[2].join(" & ")} \\end{bmatrix}`;
     solutionContent.innerHTML = `
       <div class="step">
-        <div class="step-title">Part 1: Trigonometric Function</div>
-        <p>Given: \\( ${currentQuestion.part1.function} \\)</p>
-        <p>Solution: \\( ${currentQuestion.part1.answer} \\)</p>
-      </div>
-      <div class="step">
-        <div class="step-title">Part 2: Logarithmic Function</div>
-        <p>Given: \\( ${currentQuestion.part2.function} \\)</p>
-        <p>Solution: \\( ${currentQuestion.part2.answer} \\)</p>
+        <div class="step-title">Solution</div>
+        <p>Given matrix: \\[ ${matrixStr} \\]</p>
+        <p>Determinant is non-zero when: \\( ${currentQuestion.answer} \\)</p>
+        <p>This means k must avoid the value(s): ${currentQuestion.excludedValues.join(", ")}</p>
       </div>
     `;
     solutionArea.classList.remove("hidden");
@@ -485,22 +417,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function showSteps() {
+    const m = currentQuestion.matrix;
+    const matrixStr = `\\begin{bmatrix} ${m[0].join(" & ")} \\\\ ${m[1].join(" & ")} \\\\ ${m[2].join(" & ")} \\end{bmatrix}`;
     stepsContent.innerHTML = `
       <div class="step">
-        <div class="step-title">Part 1: Trigonometric Function</div>
-        <p>Given: \\( ${currentQuestion.part1.function} \\)</p>
-        <ol>${currentQuestion.part1.steps
+        <div class="step-title">Step-by-Step Solution</div>
+        <p>Given matrix: \\[ ${matrixStr} \\]</p>
+        <ol>${currentQuestion.steps
           .map((s) => `<li>${s}</li>`)
           .join("")}</ol>
-        <p>Final answer: \\( ${currentQuestion.part1.answer} \\)</p>
-      </div>
-      <div class="step">
-        <div class="step-title">Part 2: Logarithmic Function</div>
-        <p>Given: \\( ${currentQuestion.part2.function} \\)</p>
-        <ol>${currentQuestion.part2.steps
-          .map((s) => `<li>${s}</li>`)
-          .join("")}</ol>
-        <p>Final answer: \\( ${currentQuestion.part2.answer} \\)</p>
+        <p>Final answer: \\( ${currentQuestion.answer} \\)</p>
       </div>
     `;
     stepByStepArea.classList.remove("hidden");
@@ -511,12 +437,10 @@ document.addEventListener("DOMContentLoaded", () => {
    * UTIL BUTTONS
    * ========================= */
   function clearAll() {
-    answer1Input.value = "";
-    answer2Input.value = "";
+    userAnswerInput.value = "";
     reasoningInput.value = "";
 
-    validation1.textContent = "";
-    validation2.textContent = "";
+    validationAnswer.textContent = "";
 
     feedbackArea.classList.add("hidden");
     stepByStepArea.classList.add("hidden");
@@ -525,62 +449,39 @@ document.addEventListener("DOMContentLoaded", () => {
     hintArea.classList.add("hidden");
     if (examplesArea) examplesArea.classList.add("hidden");
 
-    updatePreview(answer1Input, previewContent1, preview1);
-    updatePreview(answer2Input, previewContent2, preview2);
     updateMathPreview();
     updateInputStatus();
   }
 
   function generateNewQuestion() {
-    // Toggle between two presets
-    if (currentQuestion.part1.function === "f(x) = 3\\cos(2x) + 4\\sin(3x)") {
+    // Toggle between two preset matrices
+    if (currentQuestion.excludedValues[0] === 2) {
       currentQuestion = {
-        part1: {
-          function: "f(x) = 2\\cos(4x) - 5\\sin(x)",
-          answer: "-8\\sin(4x) - 5\\cos(x)",
-          steps: [
-            "Apply the chain rule to each term separately",
-            "For 2\\cos(4x): derivative = 2 \\cdot (-4\\sin(4x)) = -8\\sin(4x)",
-            "For -5\\sin(x): derivative = -5 \\cdot (\\cos(x)) = -5\\cos(x)",
-            "Combine the results: f'(x) = -8\\sin(4x) - 5\\cos(x)",
-          ],
-        },
-        part2: {
-          function: "g(y) = \\ln(y^3 - 2y + 5)",
-          answer: "\\frac{3y^2 - 2}{y^3 - 2y + 5}",
-          steps: [
-            "Use the chain rule for logarithms: \\frac{d}{dy}[\\ln(u(y))] = \\frac{u'(y)}{u(y)}",
-            "Let u(y) = y^3 - 2y + 5",
-            "Find u'(y) = 3y^2 - 2",
-            "Apply the formula: g'(y) = \\frac{3y^2 - 2}{y^3 - 2y + 5}",
-          ],
-        },
+        matrix: [[1, 3, 2], [0, -2, 4], ["k", 1, -1]],
+        answer: "k < 3 or k > 3",
+        excludedValues: [3],
+        steps: [
+          "Calculate the determinant using cofactor expansion",
+          "Set determinant equal to zero and solve for k",
+          "The answer is all k except k = 3",
+        ],
       };
+      questionVariantIndex = 1;
     } else {
       currentQuestion = {
-        part1: {
-          function: "f(x) = 3\\cos(2x) + 4\\sin(3x)",
-          answer: "-6\\sin(2x) + 12\\cos(3x)",
-          steps: [
-            "Apply the chain rule to each term separately",
-            "For 3\\cos(2x): derivative = 3 \\cdot (-2\\sin(2x)) = -6\\sin(2x)",
-            "For 4\\sin(3x): derivative = 4 \\cdot (3\\cos(3x)) = 12\\cos(3x)",
-            "Combine the results: f'(x) = -6\\sin(2x) + 12\\cos(3x)",
-          ],
-        },
-        part2: {
-          function: "g(y) = \\ln(2y^2 + 3y + 1)",
-          answer: "\\frac{4y + 3}{2y^2 + 3y + 1}",
-          steps: [
-            "Use the chain rule for logarithms: \\frac{d}{dy}[\\ln(u(y))] = \\frac{u'(y)}{u(y)}",
-            "Let u(y) = 2y^2 + 3y + 1",
-            "Find u'(y) = 4y + 3",
-            "Apply the formula: g'(y) = \\frac{4y + 3}{2y^2 + 3y + 1}",
-          ],
-        },
+        matrix: [[2, 4, 3], [-3, 0, -5], ["k", 4, 3]],
+        answer: "k < 2 or k > 2",
+        excludedValues: [2],
+        steps: [
+          "Calculate the determinant using cofactor expansion",
+          "Set determinant equal to zero and solve for k",
+          "The answer is all k except k = 2",
+        ],
       };
+      questionVariantIndex = 0;
     }
 
+    questionOpenedAt = Date.now();
     updateQuestionDisplay();
     clearAll();
   }
@@ -592,26 +493,5 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       hintArea.classList.add("hidden");
     }
-  }
-
-  function fillWithExamples() {
-    answer1Input.value = "-6\\sin(2x) + 12\\cos(3x)";
-    answer2Input.value = "\\frac{4y + 3}{2y^2 + 3y + 1}";
-    reasoningInput.value = `For Part 1:
-Using the chain rule:
-\\[\\frac{d}{dx}[3\\cos(2x)] = 3 \\cdot (-2\\sin(2x)) = -6\\sin(2x)\\]
-\\[\\frac{d}{dx}[4\\sin(3x)] = 4 \\cdot (3\\cos(3x)) = 12\\cos(3x)\\]
-So $f'(x) = -6\\sin(2x) + 12\\cos(3x)$
-
-For Part 2:
-Using the chain rule for logarithms:
-\\[g'(y) = \\frac{d}{dy}[\\ln(u(y))] = \\frac{u'(y)}{u(y)}\\]
-Where $u(y) = 2y^2 + 3y + 1$ and $u'(y) = 4y + 3$
-So $g'(y) = \\frac{4y + 3}{2y^2 + 3y + 1}$`;
-
-    updatePreview(answer1Input, previewContent1, preview1);
-    updatePreview(answer2Input, previewContent2, preview2);
-    updateMathPreview();
-    updateInputStatus();
   }
 });

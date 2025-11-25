@@ -56,8 +56,42 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
   // ---- MathJax helper ----
-  const typeset = (nodes) =>
-    window.MathJax?.typesetPromise(nodes).catch(() => {});
+  function runMathJax(elements) {
+    if (!window.MathJax) return Promise.resolve();
+    const { typesetPromise, typeset } = window.MathJax;
+    if (typeof typesetPromise === "function") {
+      return typesetPromise(elements);
+    }
+    if (typeof typeset === "function") {
+      typeset(elements);
+      return Promise.resolve();
+    }
+    return Promise.resolve();
+  }
+    let questionOpenedAt = Date.now();
+
+    function normalizeAIFeedback(aiFeedback) {
+      if (!aiFeedback) return { summary: "No AI feedback returned." };
+      if (typeof aiFeedback === "string") {
+        try {
+          return JSON.parse(aiFeedback);
+        } catch {
+          return { summary: aiFeedback };
+        }
+      }
+      if (typeof aiFeedback === "object") return aiFeedback;
+      return { summary: String(aiFeedback) };
+    }
+
+    function saveQuizSubmission(payload) {
+      if (!window.SubmissionClient?.save) return;
+      window.SubmissionClient
+        .save(payload)
+        .then((res) => {
+          if (res?.error) console.warn("Submission save error:", res.error);
+        })
+        .catch((err) => console.warn("Submission save failed", err));
+    }
   let mjTimer;
 
   // ---- Question bank (same values as in HTML) ----
@@ -130,6 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateInputStatus();
     updatePreview(el.ans1, previewContent1, el.preview1);
     updatePreview(el.ans2, previewContent2, el.preview2);
+    questionOpenedAt = Date.now();
   }
 
   function currentQ() {
@@ -141,7 +176,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const tex = `${q.a} + ${q.c}\\,\\lvert x^2 - ${q.b}\\rvert`;
     el.functionDisplay.innerHTML = `\\( f(x) = ${tex} \\)`;
     el.functionDisplay2.innerHTML = `\\( f(x) = ${tex} \\)`;
-    typeset([el.functionDisplay, el.functionDisplay2]);
+    runMathJax([el.functionDisplay, el.functionDisplay2]);
   }
 
   function attachListeners() {
@@ -186,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
       previewContent.innerHTML = latex;
       previewContainer.classList.add("preview-valid");
       previewContainer.classList.remove("preview-invalid");
-      typeset([previewContent]);
+      runMathJax([previewContent]);
     } catch {
       previewContent.innerHTML =
         '<span style="color:#dc3545;">Invalid interval notation</span>';
@@ -230,7 +265,7 @@ document.addEventListener("DOMContentLoaded", () => {
       el.latexValidation.classList.remove("hidden");
       el.mathPreviewContent.innerHTML = value;
       if (mjTimer) clearTimeout(mjTimer);
-      mjTimer = setTimeout(() => typeset([el.mathPreviewContent]), 200);
+      mjTimer = setTimeout(() => runMathJax([el.mathPreviewContent]), 200);
     } else {
       el.latexValidation.innerHTML = `<span class="latex-invalid">✗ LaTeX errors: ${validation.errors.join(
         ", "
@@ -269,6 +304,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const userAns1 = (el.ans1.value || "").trim();
     const userAns2 = (el.ans2.value || "").trim();
     const reasoning = (el.reasoningInput.value || "").trim();
+    const submittedAt = Date.now();
 
     const isAns1Correct = normalize(userAns1) === normalize(q.domain);
     const isAns2Correct = normalize(userAns2) === normalize(q.range);
@@ -295,7 +331,37 @@ document.addEventListener("DOMContentLoaded", () => {
     el.feedbackArea.classList.remove("hidden");
 
     // === AI FEEDBACK (this is the new part) ===
-    await generateAIFeedback(allCorrect, reasoning, userAns1, userAns2, q);
+    const aiFeedback = await generateAIFeedback(
+      allCorrect,
+      reasoning,
+      userAns1,
+      userAns2,
+      q
+    );
+
+    saveQuizSubmission({
+      question: "Domain and range of f(x) = a + c|x^2 - b|",
+      course: "differential",
+      questionId: `domain-range-${idx}`,
+      timeOpen: questionOpenedAt,
+      timeSubmitted: submittedAt,
+      userAnswer: {
+        domain: userAns1 || "(blank)",
+        range: userAns2 || "(blank)",
+      },
+      reasoningSteps: reasoning,
+      aiFeedback,
+      correctness: allCorrect ? "correct" : "incorrect",
+      metadata: {
+        questionIndex: idx,
+        latex: `f(x) = ${q.a} + ${q.c}|x^2 - ${q.b}|`,
+        parameters: { a: q.a, b: q.b, c: q.c },
+        answers: {
+          domain: { value: userAns1 || "(blank)", correct: isAns1Correct },
+          range: { value: userAns2 || "(blank)", correct: isAns2Correct },
+        },
+      },
+    });
   }
 
   async function generateAIFeedback(isCorrect, reasoning, userDom, userRan, q) {
@@ -317,23 +383,29 @@ document.addEventListener("DOMContentLoaded", () => {
         isCorrect
       );
 
-      // Render via your AIRender helper
-      if (window.AIRender?.renderCard) {
-        el.aiFeedbackContent.innerHTML = window.AIRender.renderCard(feedback);
-      } else if (window.AIRender?.build) {
-        el.aiFeedbackContent.innerHTML = window.AIRender.build(feedback);
+      const normalizedFeedback = normalizeAIFeedback(feedback);
+      const renderer =
+        window.AIRender?.renderCard || window.AIRender?.build || null;
+      if (renderer) {
+        el.aiFeedbackContent.innerHTML = renderer(normalizedFeedback);
       } else {
-        // Minimal fallback
-        el.aiFeedbackContent.innerHTML = fallbackFeedbackHTML(feedback);
+        el.aiFeedbackContent.innerHTML = fallbackFeedbackHTML(normalizedFeedback);
       }
 
       el.aiFeedbackArea.classList.remove("hidden");
-      typeset([el.aiFeedbackContent]);
+      runMathJax([el.aiFeedbackContent]);
+      return normalizedFeedback;
     } catch (err) {
       console.error("AI feedback error:", err);
+      const fallback = {
+        summary: err?.message || "Unable to generate AI feedback at this time.",
+        correctness: isCorrect ? "correct" : "incorrect",
+      };
       el.aiFeedbackContent.innerHTML =
         "<p>Unable to generate AI feedback at this time.</p>";
       el.aiFeedbackArea.classList.remove("hidden");
+      runMathJax([el.aiFeedbackContent]);
+      return fallback;
     }
   }
 
@@ -367,7 +439,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <p>Therefore \\(Range(f)=[${q.a},\\infty)\\) → <code>${q.range}</code>.</p>
       </div>`;
     el.solutionArea.classList.remove("hidden");
-    typeset([el.solutionContent]);
+    runMathJax([el.solutionContent]);
   }
 
   function showSteps() {
@@ -396,7 +468,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }</code></p>
       </div>`;
     el.stepsArea.classList.remove("hidden");
-    typeset([el.stepsContent]);
+    runMathJax([el.stepsContent]);
   }
 
   function clearAll() {
@@ -422,8 +494,8 @@ document.addEventListener("DOMContentLoaded", () => {
     idx = (idx + 1) % questionBank.length;
     updateQuestionDisplay();
     clearAll();
+    questionOpenedAt = Date.now();
   }
-
   function toggleHints() {
     if (el.hintArea.classList.contains("hidden")) {
       el.hintArea.classList.remove("hidden");

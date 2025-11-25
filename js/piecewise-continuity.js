@@ -36,6 +36,7 @@
   const stepsContent = document.getElementById("stepsContent");
   const solutionWrap = document.getElementById("solution");
   const solutionContent = document.getElementById("solutionContent");
+  let questionOpenedAt = Date.now();
 
   // Utility helpers
   function setIcon(el, ok) {
@@ -202,13 +203,49 @@ x-3, & 4\le x<6,\\
     reasoningInput.value = "";
     validateLatexAndPreview();
     updateEnableCheck();
+    questionOpenedAt = Date.now();
+  }
+
+  function normalizeAIFeedback(aiFeedback) {
+    if (!aiFeedback) {
+      return { summary: "No AI feedback was generated." };
+    }
+    if (typeof aiFeedback === "string") {
+      try {
+        return JSON.parse(aiFeedback);
+      } catch {
+        return { summary: aiFeedback };
+      }
+    }
+    if (typeof aiFeedback === "object") {
+      return aiFeedback;
+    }
+    return { summary: String(aiFeedback) };
+  }
+
+  function saveQuizSubmission(payload) {
+    if (!window.SubmissionClient?.save) return;
+    window.SubmissionClient
+      .save(payload)
+      .then((res) => {
+        if (res?.error) {
+          console.warn("Submission save error:", res.error);
+        }
+      })
+      .catch((err) => console.warn("Submission save failed", err));
   }
 
   // Compare, score, show AI feedback
   async function checkSolution() {
     const q = bank[idx];
+    const submittedAt = Date.now();
     const userAt4 = ans1Sel.value;
     const userAt6 = ans2Sel.value;
+    const reasoning = reasoningInput.value.trim();
+    const userAnswer = {
+      at4: userAt4 || "(blank)",
+      at6: userAt6 || "(blank)",
+    };
 
     const ok4 = userAt4 === q.correctAt4;
     const ok6 = userAt6 === q.correctAt6;
@@ -231,6 +268,7 @@ x-3, & 4\le x<6,\\
       : "Some answers need correction. Review hints or the steps.";
     scoreBanner.classList.remove("hidden");
 
+    let parsedFeedback = null;
     // AI feedback (based on user answers + reasoning)
     try {
       const questionData = {
@@ -240,12 +278,6 @@ x-3, & 4\le x<6,\\
         correctAnswer: { at4: q.correctAt4, at6: q.correctAt6 },
       };
 
-      const userAnswer = {
-        at4: userAt4 || "(blank)",
-        at6: userAt6 || "(blank)",
-      };
-      const reasoning = reasoningInput.value.trim();
-
       const feedback = await window.openAIService.generateFeedback(
         questionData,
         userAnswer,
@@ -253,13 +285,38 @@ x-3, & 4\le x<6,\\
         allCorrect
       );
 
-      aiContent.innerHTML = window.AIRender.renderCard(feedback);
+      parsedFeedback = normalizeAIFeedback(feedback);
+      aiContent.innerHTML = window.AIRender.renderCard(parsedFeedback);
       aiBox.classList.remove("hidden");
       renderMath(aiContent);
     } catch (e) {
+      parsedFeedback = {
+        summary: e?.message || "Unable to generate AI feedback right now.",
+        correctness: allCorrect ? "correct" : "incorrect",
+      };
       aiContent.innerHTML = "<p>Unable to generate AI feedback right now.</p>";
       aiBox.classList.remove("hidden");
     }
+
+    saveQuizSubmission({
+      question: "Continuity of a piecewise function at x=4 and x=6.",
+      course: "differential",
+      questionId: `piecewise-continuity-${idx}`,
+      timeOpen: questionOpenedAt,
+      timeSubmitted: submittedAt,
+      userAnswer,
+      reasoningSteps: reasoning,
+      aiFeedback: parsedFeedback,
+      correctness: allCorrect ? "correct" : "incorrect",
+      metadata: {
+        questionIndex: idx,
+        latex: q.latex,
+        answers: {
+          at4: { value: userAt4, correct: ok4 },
+          at6: { value: userAt6, correct: ok6 },
+        },
+      },
+    });
   }
 
   // Steps & full solution

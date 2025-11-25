@@ -571,10 +571,22 @@ Therefore $Dom(f)=(-\infty,\infty)$ and $Range(f)=[a,\infty)$."
     <script src="../../js/app.js"></script>
     <script src="../../js/ai-render.js"></script>
     <script src="../../js/openai-service.js"></script>
+    <script src="../../js/submissionClient.js"></script>
 
     <!-- Page logic -->
     <script>
       document.addEventListener("DOMContentLoaded", function () {
+        // ---- Robust MathJax helper (v2/v3 safe) ----
+        window.runMathJax = function (elements) {
+          if (!window.MathJax) return Promise.resolve();
+          const { typesetPromise, typeset } = window.MathJax;
+          if (typeof typesetPromise === "function") return typesetPromise(elements);
+          if (typeof typeset === "function") {
+            typeset(elements);
+            return Promise.resolve();
+          }
+          return Promise.resolve();
+        };
         // DOM refs
         const ans1Input = document.getElementById("ans1");
         const ans2Input = document.getElementById("ans2");
@@ -674,6 +686,7 @@ Therefore $Dom(f)=(-\infty,\infty)$ and $Range(f)=[a,\infty)$."
         ];
 
         let currentQuestionIndex = 0;
+        let questionOpenedAt = Date.now();
 
         function currentQ() {
           return questionBank[currentQuestionIndex];
@@ -692,8 +705,8 @@ Therefore $Dom(f)=(-\infty,\infty)$ and $Range(f)=[a,\infty)$."
           const fn = `${q.a} + ${q.c}\\,\\lvert x^2 - ${q.b}\\rvert`;
           functionDisplay.innerHTML = `\\( f(x) = ${fn} \\)`;
           functionDisplay2.innerHTML = `\\( f(x) = ${fn} \\)`;
-          if (window.MathJax)
-            MathJax.typesetPromise([functionDisplay, functionDisplay2]);
+          if (window.runMathJax)
+            window.runMathJax([functionDisplay, functionDisplay2]);
         }
 
         function setupEventListeners() {
@@ -743,8 +756,8 @@ Therefore $Dom(f)=(-\infty,\infty)$ and $Range(f)=[a,\infty)$."
             previewContent.innerHTML = latex;
             previewContainer.classList.add("preview-valid");
             previewContainer.classList.remove("preview-invalid");
-            if (window.MathJax) {
-              MathJax.typesetPromise([previewContent]).catch(() => {
+            if (window.runMathJax) {
+              window.runMathJax([previewContent]).catch(() => {
                 previewContent.innerHTML =
                   '<span style="color:#dc3545;">Invalid LaTeX</span>';
                 previewContainer.classList.remove("preview-valid");
@@ -779,7 +792,7 @@ Therefore $Dom(f)=(-\infty,\infty)$ and $Range(f)=[a,\infty)$."
               '<span class="latex-valid">✓ Valid LaTeX syntax</span>';
             latexValidation.classList.remove("hidden");
             mathPreviewContent.innerHTML = value;
-            if (window.MathJax) MathJax.typesetPromise([mathPreviewContent]);
+            if (window.runMathJax) window.runMathJax([mathPreviewContent]);
           } else {
             latexValidation.innerHTML = `<span class="latex-invalid">✗ LaTeX errors: ${validation.errors.join(
               ", "
@@ -816,11 +829,12 @@ Therefore $Dom(f)=(-\infty,\infty)$ and $Range(f)=[a,\infty)$."
         }
 
         // ========== Check answers + AI ==========
-        function checkAnswers() {
+        async function checkAnswers() {
           const q = currentQ();
           const userDom = ans1Input.value.trim();
           const userRan = ans2Input.value.trim();
           const reasoning = reasoningInput.value.trim();
+          const submittedAt = Date.now();
 
           // Compare LaTeX cores
           const domOK = normalizeCore(userDom) === normalizeCore(q.domain);
@@ -844,7 +858,33 @@ Therefore $Dom(f)=(-\infty,\infty)$ and $Range(f)=[a,\infty)$."
             : "feedback incorrect";
           feedbackArea.classList.remove("hidden");
 
-          generateAIFeedback(allCorrect, reasoning, userDom, userRan, q);
+          // Get AI feedback then persist submission
+          const feedback = await generateAIFeedback(allCorrect, reasoning, userDom, userRan, q);
+
+          // Build submission payload with metadata
+          const payload = {
+            question: "Domain and range of f(x) = a + c|x^2 - b|",
+            course: "differential",
+            questionId: `domain-range-${currentQuestionIndex}`,
+            timeOpen: questionOpenedAt,
+            timeSubmitted: submittedAt,
+            userAnswer: { domain: userDom || "(blank)", range: userRan || "(blank)" },
+            reasoningSteps: reasoning,
+            aiFeedback: feedback,
+            correctness: allCorrect ? "correct" : "incorrect",
+            metadata: {
+              questionIndex: currentQuestionIndex,
+              latex: `f(x) = ${q.a} + ${q.c}|x^2 - ${q.b}|`,
+              parameters: { a: q.a, b: q.b, c: q.c },
+              answers: {
+                domain: { value: userDom || "(blank)", correct: domOK },
+                range: { value: userRan || "(blank)", correct: ranOK }
+              }
+            }
+          };
+          window.SubmissionClient?.save(payload).then(r => {
+            if (!r?.ok) console.warn("Submission save error", r);
+          }).catch(e => console.warn("Submission save failed", e));
         }
 
         async function generateAIFeedback(
@@ -882,7 +922,7 @@ Therefore $Dom(f)=(-\infty,\infty)$ and $Range(f)=[a,\infty)$."
             }
 
             aiFeedbackArea.classList.remove("hidden");
-            if (window.MathJax) MathJax.typesetPromise([aiFeedbackContent]);
+            if (window.runMathJax) window.runMathJax([aiFeedbackContent]);
           } catch (err) {
             console.error("AI feedback error:", err);
             aiFeedbackContent.innerHTML =
@@ -911,7 +951,7 @@ Therefore $Dom(f)=(-\infty,\infty)$ and $Range(f)=[a,\infty)$."
               <p>Hence \\(Range(f)=${ensureWrappedLatex(q.range)}\\).</p>
             </div>`;
           solutionArea.classList.remove("hidden");
-          if (window.MathJax) MathJax.typesetPromise([solutionContent]);
+          if (window.runMathJax) window.runMathJax([solutionContent]);
         }
 
         function showSteps() {
@@ -936,7 +976,7 @@ Therefore $Dom(f)=(-\infty,\infty)$ and $Range(f)=[a,\infty)$."
               <p>Final: \\( Range(f) = ${ensureWrappedLatex(q.range)} \\)</p>
             </div>`;
           stepByStepArea.classList.remove("hidden");
-          if (window.MathJax) MathJax.typesetPromise([stepsContent]);
+          if (window.runMathJax) window.runMathJax([stepsContent]);
         }
 
         function clearAll() {
@@ -958,10 +998,10 @@ Therefore $Dom(f)=(-\infty,\infty)$ and $Range(f)=[a,\infty)$."
         }
 
         function generateNewQuestion() {
-          currentQuestionIndex =
-            (currentQuestionIndex + 1) % questionBank.length;
+          currentQuestionIndex = (currentQuestionIndex + 1) % questionBank.length;
           updateQuestionDisplay();
           clearAll();
+          questionOpenedAt = Date.now();
         }
 
         function toggleHints() {

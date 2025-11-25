@@ -419,6 +419,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const isCorrect = checkUserAnswer(userAnswer);
 
+    let parsedFeedback = null;
     try {
       elements.aiFeedbackContentEnhanced.innerHTML =
         "<p>Generating AI feedback...</p>";
@@ -432,7 +433,7 @@ document.addEventListener("DOMContentLoaded", function () {
       );
 
       // --- parse if stringified JSON ---
-      let parsedFeedback = aiFeedback;
+      parsedFeedback = aiFeedback;
       if (typeof aiFeedback === "string") {
         try {
           parsedFeedback = JSON.parse(aiFeedback);
@@ -451,6 +452,9 @@ document.addEventListener("DOMContentLoaded", function () {
         );
       }
     } catch (error) {
+      parsedFeedback = {
+        summary: error?.message || "Unable to generate AI feedback right now.",
+      };
       elements.aiFeedbackContentEnhanced.innerHTML = `
     <p style="color:#dc3545;"><strong>Error:</strong> ${error.message}</p>
   `;

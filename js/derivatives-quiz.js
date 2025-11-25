@@ -53,28 +53,55 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =========================
    * DATA
    * ========================= */
-  let currentQuestion = {
-    part1: {
-      function: "f(x) = 3\\cos(2x) + 4\\sin(3x)",
-      answer: "-6\\sin(2x) + 12\\cos(3x)",
-      steps: [
-        "Apply the chain rule to each term separately",
-        "For 3\\cos(2x): derivative = 3 \\cdot (-2\\sin(2x)) = -6\\sin(2x)",
-        "For 4\\sin(3x): derivative = 4 \\cdot (3\\cos(3x)) = 12\\cos(3x)",
-        "Combine the results: f'(x) = -6\\sin(2x) + 12\\cos(3x)",
-      ],
+  const questionVariants = [
+    {
+      part1: {
+        function: "f(x) = 3\\cos(2x) + 4\\sin(3x)",
+        answer: "-6\\sin(2x) + 12\\cos(3x)",
+        steps: [
+          "Apply the chain rule to each term separately",
+          "For 3\\cos(2x): derivative = 3 \\cdot (-2\\sin(2x)) = -6\\sin(2x)",
+          "For 4\\sin(3x): derivative = 4 \\cdot (3\\cos(3x)) = 12\\cos(3x)",
+          "Combine the results: f'(x) = -6\\sin(2x) + 12\\cos(3x)",
+        ],
+      },
+      part2: {
+        function: "g(y) = \\ln(2y^2 + 3y + 1)",
+        answer: "\\frac{4y + 3}{2y^2 + 3y + 1}",
+        steps: [
+          "Use the chain rule for logarithms: \\frac{d}{dy}[\\ln(u(y))] = \\frac{u'(y)}{u(y)}",
+          "Let u(y) = 2y^2 + 3y + 1",
+          "Find u'(y) = 4y + 3",
+          "Apply the formula: g'(y) = \\frac{4y + 3}{2y^2 + 3y + 1}",
+        ],
+      },
     },
-    part2: {
-      function: "g(y) = \\ln(2y^2 + 3y + 1)",
-      answer: "\\frac{4y + 3}{2y^2 + 3y + 1}",
-      steps: [
-        "Use the chain rule for logarithms: \\frac{d}{dy}[\\ln(u(y))] = \\frac{u'(y)}{u(y)}",
-        "Let u(y) = 2y^2 + 3y + 1",
-        "Find u'(y) = 4y + 3",
-        "Apply the formula: g'(y) = \\frac{4y + 3}{2y^2 + 3y + 1}",
-      ],
+    {
+      part1: {
+        function: "f(x) = 2\\cos(4x) - 5\\sin(x)",
+        answer: "-8\\sin(4x) - 5\\cos(x)",
+        steps: [
+          "Apply the chain rule to each term separately",
+          "For 2\\cos(4x): derivative = 2 \\cdot (-4\\sin(4x)) = -8\\sin(4x)",
+          "For -5\\sin(x): derivative = -5 \\cdot (\\cos(x)) = -5\\cos(x)",
+          "Combine the results: f'(x) = -8\\sin(4x) - 5\\cos(x)",
+        ],
+      },
+      part2: {
+        function: "g(y) = \\ln(y^3 - 2y + 5)",
+        answer: "\\frac{3y^2 - 2}{y^3 - 2y + 5}",
+        steps: [
+          "Use the chain rule for logarithms: \\frac{d}{dy}[\\ln(u(y))] = \\frac{u'(y)}{u(y)}",
+          "Let u(y) = y^3 - 2y + 5",
+          "Find u'(y) = 3y^2 - 2",
+          "Apply the formula: g'(y) = \\frac{3y^2 - 2}{y^3 - 2y + 5}",
+        ],
+      },
     },
-  };
+  ];
+  let currentQuestionIndex = 0;
+  let currentQuestion = questionVariants[currentQuestionIndex];
+  let questionOpenedAt = Date.now();
 
   /* =========================
    * INIT
@@ -89,6 +116,20 @@ document.addEventListener("DOMContentLoaded", () => {
     updatePreview(answer2Input, previewContent2, preview2);
     updateMathPreview();
     updateInputStatus();
+    questionOpenedAt = Date.now();
+  }
+
+  function runMathJax(elements) {
+    if (!window.MathJax) return Promise.resolve();
+    const { typesetPromise, typeset } = window.MathJax;
+    if (typeof typesetPromise === "function") {
+      return typesetPromise(elements);
+    }
+    if (typeof typeset === "function") {
+      typeset(elements);
+      return Promise.resolve();
+    }
+    return Promise.resolve();
   }
 
   function updateQuestionDisplay() {
@@ -96,8 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
       function1Display.innerHTML = `\\( ${currentQuestion.part1.function} \\)`;
     if (function2Display)
       function2Display.innerHTML = `\\( ${currentQuestion.part2.function} \\)`;
-    if (window.MathJax)
-      MathJax.typesetPromise([function1Display, function2Display]);
+    if (window.MathJax) runMathJax([function1Display, function2Display]);
   }
 
   /* =========================
@@ -151,7 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     previewContentEl.innerHTML = latex;
     if (window.MathJax) {
-      MathJax.typesetPromise([previewContentEl])
+      runMathJax([previewContentEl])
         .then(() => {
           previewContainerEl.classList.add("preview-valid");
           previewContainerEl.classList.remove("preview-invalid");
@@ -295,13 +335,42 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (bothAnswersCorrect || rq.ok)
       correctnessLabel = "partially-correct";
 
-    await generateAIFeedback({
+    const aiFeedback = await generateAIFeedback({
       correctnessLabel,
       bothAnswersCorrect,
       reasoningScore: rq,
       userAnswers: { part1: u1, part2: u2 },
       reasoning,
     });
+
+    try {
+      saveQuizSubmission({
+        question:
+          "Derivatives of logarithmic and trigonometric functions",
+        course: "differential",
+        questionId: `derivatives-${currentQuestionIndex}`,
+        timeOpen: questionOpenedAt,
+        timeSubmitted: Date.now(),
+        userAnswer: { part1: u1 || "(blank)", part2: u2 || "(blank)" },
+        reasoningSteps: reasoning,
+        aiFeedback,
+        correctness: correctnessLabel,
+        metadata: {
+          questionIndex: currentQuestionIndex,
+          reasoningScore: rq,
+          functions: {
+            part1: currentQuestion.part1.function,
+            part2: currentQuestion.part2.function,
+          },
+          answers: {
+            part1: { value: u1 || "(blank)", correct: ok1 },
+            part2: { value: u2 || "(blank)", correct: ok2 },
+          },
+        },
+      });
+    } catch (e) {
+      console.warn("Submission save failed", e);
+    }
   }
 
   /* =========================
@@ -339,6 +408,29 @@ document.addEventListener("DOMContentLoaded", () => {
     if (latexOk) strengths.push("Valid LaTeX syntax.");
 
     return { ok, strengths, issues };
+  }
+
+  function normalizeAIFeedback(aiFeedback) {
+    if (!aiFeedback) return { summary: "No AI feedback returned." };
+    if (typeof aiFeedback === "string") {
+      try {
+        return JSON.parse(aiFeedback);
+      } catch {
+        return { summary: aiFeedback };
+      }
+    }
+    if (typeof aiFeedback === "object") return aiFeedback;
+    return { summary: String(aiFeedback) };
+  }
+
+  function saveQuizSubmission(payload) {
+    if (!window.SubmissionClient?.save) return;
+    window.SubmissionClient
+      .save(payload)
+      .then((res) => {
+        if (res?.error) console.warn("Submission save error:", res.error);
+      })
+      .catch((err) => console.warn("Submission save failed", err));
   }
 
   /* =========================
@@ -419,22 +511,29 @@ document.addEventListener("DOMContentLoaded", () => {
           (bothAnswersCorrect ? currentQuestion.part1.answer : ""),
       };
 
-      // Render card
-      if (window.AIRender?.renderCard) {
-        aiFeedbackContent.innerHTML = window.AIRender.renderCard(feedbackObj);
+      const normalizedFeedback = normalizeAIFeedback(feedbackObj);
+      const renderer = window.AIRender?.renderCard || window.AIRender?.build;
+      if (renderer) {
+        aiFeedbackContent.innerHTML = renderer(normalizedFeedback);
       } else {
         aiFeedbackContent.innerHTML = `<div class="ai-card"><strong>AI Feedback</strong><p>${escapeHTML(
-          feedbackObj.summary
+          normalizedFeedback.summary
         )}</p></div>`;
       }
       aiFeedbackSection.classList.remove("hidden");
 
       if (window.MathJax) MathJax.typesetPromise([aiFeedbackContent]);
+      return normalizedFeedback;
     } catch (e) {
       console.error("AI feedback error:", e);
+      const fallback = normalizeAIFeedback({
+        summary: e?.message || "Unable to generate AI feedback right now.",
+        correctness: correctnessLabel,
+      });
       aiFeedbackContent.innerHTML =
         '<p class="error-message">Unable to generate AI feedback right now.</p>';
       aiFeedbackSection.classList.remove("hidden");
+      return fallback;
     }
   }
 
@@ -517,57 +616,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function generateNewQuestion() {
-    // simple toggle between two presets
-    if (currentQuestion.part1.function === "f(x) = 3\\cos(2x) + 4\\sin(3x)") {
-      currentQuestion = {
-        part1: {
-          function: "f(x) = 2\\cos(4x) - 5\\sin(x)",
-          answer: "-8\\sin(4x) - 5\\cos(x)",
-          steps: [
-            "Apply the chain rule to each term separately",
-            "For 2\\cos(4x): derivative = 2 \\cdot (-4\\sin(4x)) = -8\\sin(4x)",
-            "For -5\\sin(x): derivative = -5 \\cdot (\\cos(x)) = -5\\cos(x)",
-            "Combine the results: f'(x) = -8\\sin(4x) - 5\\cos(x)",
-          ],
-        },
-        part2: {
-          function: "g(y) = \\ln(y^3 - 2y + 5)",
-          answer: "\\frac{3y^2 - 2}{y^3 - 2y + 5}",
-          steps: [
-            "Use the chain rule for logarithms: \\frac{d}{dy}[\\ln(u(y))] = \\frac{u'(y)}{u(y)}",
-            "Let u(y) = y^3 - 2y + 5",
-            "Find u'(y) = 3y^2 - 2",
-            "Apply the formula: g'(y) = \\frac{3y^2 - 2}{y^3 - 2y + 5}",
-          ],
-        },
-      };
-    } else {
-      currentQuestion = {
-        part1: {
-          function: "f(x) = 3\\cos(2x) + 4\\sin(3x)",
-          answer: "-6\\sin(2x) + 12\\cos(3x)",
-          steps: [
-            "Apply the chain rule to each term separately",
-            "For 3\\cos(2x): derivative = 3 \\cdot (-2\\sin(2x)) = -6\\sin(2x)",
-            "For 4\\sin(3x): derivative = 4 \\cdot (3\\cos(3x)) = 12\\cos(3x)",
-            "Combine the results: f'(x) = -6\\sin(2x) + 12\\cos(3x)",
-          ],
-        },
-        part2: {
-          function: "g(y) = \\ln(2y^2 + 3y + 1)",
-          answer: "\\frac{4y + 3}{2y^2 + 3y + 1}",
-          steps: [
-            "Use the chain rule for logarithms: \\frac{d}{dy}[\\ln(u(y))] = \\frac{u'(y)}{u(y)}",
-            "Let u(y) = 2y^2 + 3y + 1",
-            "Find u'(y) = 4y + 3",
-            "Apply the formula: g'(y) = \\frac{4y + 3}{2y^2 + 3y + 1}",
-          ],
-        },
-      };
-    }
+    currentQuestionIndex = (currentQuestionIndex + 1) % questionVariants.length;
+    currentQuestion = questionVariants[currentQuestionIndex];
 
     updateQuestionDisplay();
     clearAll();
+    questionOpenedAt = Date.now();
   }
 
   function toggleHints() {

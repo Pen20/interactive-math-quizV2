@@ -43,6 +43,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const mjBlock = (s) => `\\[${s}\\]`;
   const typeset = (node) =>
     window.MathJax?.typesetPromise([node]).catch(() => {});
+   let questionOpenedAt = Date.now();
+
+   function normalizeAIFeedback(aiFeedback) {
+     if (!aiFeedback) return { summary: "No AI feedback returned." };
+     if (typeof aiFeedback === "string") {
+       try {
+         return JSON.parse(aiFeedback);
+       } catch {
+         return { summary: aiFeedback };
+       }
+     }
+     if (typeof aiFeedback === "object") return aiFeedback;
+     return { summary: String(aiFeedback) };
+   }
+
+   function saveQuizSubmission(payload) {
+     if (!window.SubmissionClient?.save) return;
+     window.SubmissionClient
+       .save(payload)
+       .then((res) => {
+         if (res?.error) console.warn("Submission save error:", res.error);
+       })
+       .catch((err) => console.warn("Submission save failed", err));
+   }
   function g(id) {
     return document.getElementById(id);
   }
@@ -98,6 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
     el.aiFeedbackContent.innerHTML = "";
     el.stepsContent.innerHTML = "";
     el.solutionContent.innerHTML = "";
+    questionOpenedAt = Date.now();
   }
 
   // Parse numeric/fraction string
@@ -221,7 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function aiFeedback(allCorrect) {
     const userAnswer = el.ans1.value.trim();
     const reasoning = el.reasoningInput.value.trim();
-
+    const submittedAt = Date.now();
     const questionData = {
       question: "Evaluate the limit after simplifying.",
       latex: S.latex,
@@ -229,10 +254,11 @@ document.addEventListener("DOMContentLoaded", () => {
       correctAnswer: { value: S.correct },
     };
 
-    try {
-      el.aiFeedbackContent.innerHTML = "<p>Generating AI feedback…</p>";
-      show(el.aiFeedbackEnhanced);
+    let parsedFeedback = { summary: "AI feedback unavailable." };
+    show(el.aiFeedbackEnhanced);
+    el.aiFeedbackContent.innerHTML = "<p>Generating AI feedback…</p>";
 
+    try {
       const obj = await window.openAIService.generateFeedback(
         questionData,
         { value: userAnswer },
@@ -240,12 +266,40 @@ document.addEventListener("DOMContentLoaded", () => {
         allCorrect
       );
 
-      el.aiFeedbackContent.innerHTML = window.AIRender.renderCard(obj);
-      typeset(el.aiFeedbackContent);
+      parsedFeedback = normalizeAIFeedback(obj);
+      const renderer =
+        window.AIRender?.renderCard || window.AIRender?.build || null;
+      if (renderer) {
+        el.aiFeedbackContent.innerHTML = renderer(parsedFeedback);
+      } else {
+        el.aiFeedbackContent.textContent = parsedFeedback.summary || "AI feedback generated.";
+      }
     } catch (e) {
-      el.aiFeedbackContent.innerHTML = `<p style="color:#dc3545;"><strong>Error:</strong> ${e.message}</p>
-         <p>Check your OpenAI settings.</p>`;
-      show(el.aiFeedbackEnhanced);
+      const errorMessage = e?.message || "Unable to generate AI feedback right now.";
+      parsedFeedback = {
+        summary: errorMessage,
+        correctness: allCorrect ? "correct" : "incorrect",
+      };
+      el.aiFeedbackContent.innerHTML = `<p style="color:#dc3545;"><strong>Error:</strong> ${errorMessage}</p>
+        <p>Check your OpenAI settings.</p>`;
+    } finally {
+      typeset(el.aiFeedbackContent);
+      saveQuizSubmission({
+        question: "Evaluate the limit after simplifying.",
+        course: "differential",
+        questionId: `limit-at-point-${S.a}-${S.b}-${S.c}`,
+        timeOpen: questionOpenedAt,
+        timeSubmitted: submittedAt,
+        userAnswer: { value: userAnswer || "(blank)" },
+        reasoningSteps: reasoning,
+        aiFeedback: parsedFeedback,
+        correctness: allCorrect ? "correct" : "incorrect",
+        metadata: {
+          latex: S.latex,
+          parameters: { a: S.a, b: S.b, c: S.c },
+          userAnswer: userAnswer || "(blank)",
+        },
+      });
     }
   }
 

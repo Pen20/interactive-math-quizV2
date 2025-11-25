@@ -1,8 +1,25 @@
 import express from 'express';
 import { supabase } from './supabaseClient.js';
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const router = express.Router();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ROOT = path.resolve(__dirname, '..');
+const USERS_FILE = path.join(ROOT, 'server', 'users.json');
+
+function readUsers() {
+  try {
+    const raw = fs.readFileSync(USERS_FILE, 'utf8');
+    return JSON.parse(raw || '[]');
+  } catch (e) {
+    return [];
+  }
+}
 
 // Helper to parse optional JWT token (same secret as authRouter)
 function tryParseToken(req) {
@@ -12,7 +29,7 @@ function tryParseToken(req) {
   try {
     const secret = process.env.JWT_SECRET || 'dev-secret';
     const data = jwt.verify(parts[1], secret);
-    return data; // e.g. { id, email }
+    return data; // e.g. { id, email, name }
   } catch (e) {
     return null;
   }
@@ -41,6 +58,19 @@ router.post('/', async (req, res) => {
 
     // attach user info from token if available
     const user = tryParseToken(req);
+
+    // If we have a user ID but no name in token, look it up in users.json
+    let username = user?.name || body.username || null;
+    const userId = user?.id || body.userId || null;
+    const userEmail = user?.email || body.email || null;
+
+    if (userId && !username) {
+      const users = readUsers();
+      const userRecord = users.find(u => u.id === userId);
+      if (userRecord?.name) {
+        username = userRecord.name;
+      }
+    }
 
     // ensure ai_feedback and metadata are objects (so Supabase stores them as JSONB)
     function tryParseJSON(value) {
@@ -72,9 +102,9 @@ router.post('/', async (req, res) => {
       reasoning_steps: reasoningSteps,
       ai_feedback: aiFeedbackObj,
       correctness: correctness || null,
-      username: user?.name || body.username || null,
-      email: user?.email || body.email || null,
-      user_id: user?.id || body.userId || null,
+      username,
+      email: userEmail,
+      user_id: userId,
       metadata: metadataObj,
       created_at: new Date().toISOString(),
     };

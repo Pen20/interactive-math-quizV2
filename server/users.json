@@ -5,5 +5,12 @@
     "name": "Armstrong",
     "password": "$2a$10$5qR527JE0.zWiktRsnWO1ubYaNp0fdpOrN9o3FEpjaN2c.1zTP2KC",
     "createdAt": "2025-11-11T13:31:05.020Z"
+  },
+  {
+    "id": "408904df-3094-4e76-a489-eb60fd19337e",
+    "email": "armstrong@gmail.com",
+    "name": "Armstrong",
+    "password": "$2a$10$BLTrFTpM6fLUADKGydfIWuBeQ6T4uLrPNVSgDboyTxU0lcVRyQiNS",
+    "createdAt": "2025-11-24T17:42:30.428Z"
   }
 ]

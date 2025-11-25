@@ -49,6 +49,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let hintsShown = false;
   let mathjaxTimeout;
+  let questionVariantCounter = 0;
+  let questionOpenedAt = Date.now();
+  let currentQuestionId = "";
 
   // --- Helpers ---
   function randInt(min, max) {
@@ -104,6 +107,9 @@ document.addEventListener("DOMContentLoaded", function () {
         "Give two equations in the form ax+by=c such that when you try to solve them simultaneously there are no solutions",
       topic: "equations",
     };
+    questionVariantCounter += 1;
+    currentQuestionId = `equations-nosolution-${questionVariantCounter}`;
+    questionOpenedAt = Date.now();
     updateExampleDisplay();
     clearAll();
   }
@@ -339,6 +345,8 @@ document.addEventListener("DOMContentLoaded", function () {
   elements.checkButton.addEventListener("click", async function () {
     const eq1Text = elements.equation1Input.value.trim();
     const eq2Text = elements.equation2Input.value.trim();
+    const reasoningText = elements.reasoningInput.value.trim();
+    const submittedAt = Date.now();
 
     const v1 = validateEquation1Input();
     const v2 = validateEquation2Input();
@@ -362,15 +370,19 @@ document.addEventListener("DOMContentLoaded", function () {
     const isSameLine = checkSameLine(parsed1, parsed2);
     const isCorrect = hasNoSolution && !isSameLine;
 
+    elements.aiFeedbackContentEnhanced.innerHTML =
+      "<p>Generating AI feedback...</p>";
+    elements.aiFeedbackEnhanced.classList.remove("hidden");
+    let aiFeedback = null;
     try {
-      elements.aiFeedbackContentEnhanced.innerHTML =
-        "<p>Generating AI feedback...</p>";
-      elements.aiFeedbackEnhanced.classList.remove("hidden");
+      if (!window.openAIService?.generateFeedback) {
+        throw new Error("AI feedback service is unavailable right now.");
+      }
 
       const questionData = {
         question: currentExample.question,
         correctAnswer:
-          "Two parallel lines with equal (a,b) but different c (or different ratio for c).",
+          "Two parallel lines with equal coefficients but different constants.",
         equations: [eq1Text, eq2Text],
         topic: "equations",
       };
@@ -380,11 +392,11 @@ document.addEventListener("DOMContentLoaded", function () {
       const ai = await window.openAIService.generateFeedback(
         questionData,
         userAnswer,
-        elements.reasoningInput.value,
+        reasoningText,
         isCorrect
       );
+      aiFeedback = ai;
 
-      // Render as card (supports both JSON object & plain text fallback)
       elements.aiFeedbackContentEnhanced.innerHTML = window.AIRender
         ? window.AIRender.renderCard(ai)
         : typeof ai === "object"
@@ -397,7 +409,16 @@ document.addEventListener("DOMContentLoaded", function () {
         );
       }
     } catch (error) {
-      elements.aiFeedbackContentEnhanced.innerHTML = `<p style="color:#dc3545;"><strong>Error:</strong> ${error.message}</p>`;
+      aiFeedback = {
+        summary:
+          error?.message || "Unable to generate AI feedback right now.",
+      };
+      elements.aiFeedbackContentEnhanced.innerHTML = `<p style="color:#dc3545;"><strong>Error:</strong> ${error?.message || "AI feedback unavailable."}</p>`;
+      if (window.MathJax) {
+        MathJax.typesetPromise([elements.aiFeedbackContentEnhanced]).catch(
+          console.error
+        );
+      }
     }
 
     elements.feedbackDiv.classList.remove("hidden");
@@ -414,6 +435,27 @@ document.addEventListener("DOMContentLoaded", function () {
       elements.feedbackDiv.textContent =
         "✗ Your equations have a solution. Make the coefficients proportional but change the constant.";
     }
+
+    saveQuizSubmission({
+      question: currentExample.question,
+      course: "linear-algebra",
+      questionId: currentQuestionId || "equations-nosolution-0",
+      timeOpen: questionOpenedAt,
+      timeSubmitted: submittedAt,
+      userAnswer: {
+        equation1: eq1Text || "(blank)",
+        equation2: eq2Text || "(blank)",
+      },
+      reasoningSteps: reasoningText,
+      aiFeedback,
+      correctness: isCorrect ? "correct" : "incorrect",
+      metadata: {
+        questionIndex: questionVariantCounter,
+        parsedEquations: { eq1: parsed1, eq2: parsed2 },
+        noSolution: isCorrect,
+        sameLine: isSameLine,
+      },
+    });
   });
 
   elements.showSolutionButton.addEventListener("click", function () {
@@ -473,6 +515,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     updateCheckAnswerButton();
     updateMathPreview();
+  }
+
+  function saveQuizSubmission(payload) {
+    if (!window.SubmissionClient?.save) return;
+    window.SubmissionClient
+      .save(payload)
+      .then((res) => {
+        if (res?.error) console.warn("Submission save error:", res.error);
+      })
+      .catch((err) => console.warn("Submission save failed", err));
   }
 
   elements.clearButton.addEventListener("click", clearAll);

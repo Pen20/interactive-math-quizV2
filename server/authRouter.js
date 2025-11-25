@@ -63,7 +63,11 @@ router.post("/signup", async (req, res) => {
     users.push(newUser);
     writeUsers(users);
 
-    const token = generateToken({ id: newUser.id, email: newUser.email });
+    const token = generateToken({
+      id: newUser.id,
+      email: newUser.email,
+      name: newUser.name,
+    });
     return res.json({ token, user: { id: newUser.id, email: newUser.email, name: newUser.name } });
   } catch (e) {
     console.error(e);
@@ -84,7 +88,11 @@ router.post("/login", async (req, res) => {
     const ok = await bcrypt.compare(password, user.password || "");
     if (!ok) return res.status(400).json({ error: "Invalid credentials" });
 
-    const token = generateToken({ id: user.id, email: user.email });
+    const token = generateToken({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    });
     return res.json({ token, user: { id: user.id, email: user.email, name: user.name } });
   } catch (e) {
     console.error(e);
